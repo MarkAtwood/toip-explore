@@ -1,2 +1,3 @@
 # ODNI ISM package: store bytes unmodified so manifest.md5 verifies
 spec/ism/** -text
+spec/ism-convenience/** -text

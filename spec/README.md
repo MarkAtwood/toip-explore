@@ -79,3 +79,31 @@ IC Information Security Marking (ISM) public standalone package, version
   per-value `ValueClassification` column. `CVEnumISMSAR` (SAR programs) is
   empty. Unclassified SCI control systems (HCS, SI, TK, KLM, ...) are
   present.
+
+## ODNI ISM Convenience package (`ism-convenience/ISM/`)
+
+The same ISM build (`2021-NOVr2022-NOV`, build 228, 2023-06-09) with its
+dependent specifications merged in, extracted unmodified from
+`ISM-Public-Convenience-2022-DEC-Public.zip`. **Use this tree to run the
+rules.** The Standalone package above is missing 14 files that the
+Schematron loads with `document('../../CVE/...')` and
+`../../Taxonomy/...`. Those are the value lists for ISMCAT, AUTHCAT, LIC,
+MN, ROLE and USAgency, plus the ISMCAT tetragraph taxonomies. The
+Standalone README says the dependent specifications must be assembled
+separately.
+
+- Upstream URL: `https://www.dni.gov/files/documents/CIO/ICEA/Dec2022/ISM/ISM-Public-Convenience-2022-DEC-Public.zip`.
+  A `-Light` variant also exists; it was not fetched. Fetched 2026-10-21
+  from the Wayback capture `https://web.archive.org/web/20240927001902id_/`.
+- Zip SHA-256 `0d6764205fe1a3158ba257a3143effe63f8129e22432d6405e117dc7f09fc7f2`,
+  18688299 bytes. Its SHA-1 matches the Wayback CDX digest
+  `2TAHRVXXH2YNCTD2SFD7BGBOIYOB7DVA`, which is identical across all 20 HTTP 200
+  captures on `www.dni.gov` and `www.odni.gov` from 2024-09-27 to
+  2026-05-22.
+- 1439 files. All pass `ism-convenience/ISM/manifest.md5` (`md5sum -c`).
+  Every `document()` target in `ISM_XML.xsl` and the VALUECHECK and
+  INFRASTRUCTURE phase XSLs resolves inside the tree.
+- Compared with the Standalone tree, every Schematron, XSL and CVE file
+  present in both is byte-identical. Only the generated `SchemaGuide/`
+  HTML and `manifest.md5` differ. Standalone alone has
+  `Documents/ISM/SignatureMemo.pdf`.

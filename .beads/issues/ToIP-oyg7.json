@@ -1,0 +1,13 @@
+{
+  "id": "ToIP-oyg7",
+  "title": "Write explainer and ToIP-style spec for policy oracle",
+  "status": "closed",
+  "priority": 3,
+  "issue_type": "task",
+  "owner": "mark@reviewcommit.com",
+  "created_at": "2026-10-22T01:18:53.964992822Z",
+  "created_by": "agent",
+  "updated_at": "2026-10-22T01:21:54.327397157Z",
+  "closed_at": "2026-10-22T01:21:54.327397157Z",
+  "close_reason": "Wrote docs/what-we-built.md and docs/policy-package-oracle-spec.md"
+}

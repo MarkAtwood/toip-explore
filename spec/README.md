@@ -54,12 +54,15 @@ spec text), `dtgwg-trust-tasks-tf` `SPEC.md` (a generated copy of
 | `toip-kerisuite-glossary.md` | Spec-Up-T Markdown, `trustoverip/kerisuite-glossary` main @ `0da7b2c` (`spec/`, 5 files in `specs.json` order + 336 term files) | KERI Suite Glossary, Public Review Draft 01 |
 | `toip-terminology-governance-guide.md` | Spec-Up-T Markdown, `trustoverip/ctwg-terminology-governance-guide` main @ `77fdb38` (`spec/`, `specs.json` order + 11 term files) | ToIP Terminology Governance Guide v1.0.8 draft |
 
-## ODNI ISM (`ism/ISM/`)
+## ODNI ISM Standalone package (removed)
 
 IC Information Security Marking (ISM) public standalone package, version
-`2021-NOVr2022-NOV` (ISM V2022-NOV), build 228, built 2023-06-09
-(`ism/ISM/ISMpackage.properties`). Extracted unmodified from
-`ISM-Public-Standalone.zip`.
+`2021-NOVr2022-NOV` (ISM V2022-NOV), build 228, built 2023-06-09. It was
+committed at `spec/ism/ISM/` in `dacbd77` and removed on 2026-10-21. It is
+superseded by the Convenience package below, which has byte-identical rule
+files plus the dependencies this one lacks. Only
+`Documents/ISM/SignatureMemo.pdf` was unique to it; recover that from
+history if needed.
 
 - Upstream URL: `https://www.dni.gov/files/documents/CIO/ICEA/Dec2022/ISM/ISM-Public-Standalone.zip`.
   ODNI returns HTTP 403 to non-browser clients, so the zip was fetched on
@@ -71,21 +74,15 @@ IC Information Security Marking (ISM) public standalone package, version
   captures on `www.dni.gov` and `www.odni.gov` from 2025-02-21 to
   2026-05-22.
 - The zip extracts to 1221 files. Every well-formed entry in ODNI's
-  `ism/ISM/manifest.md5` passes `md5sum -c`: 1219 entries, with 2 lines
+  `manifest.md5` passed `md5sum -c`: 1219 entries, with 2 lines
   malformed.
-- The XSL and Schematron are XSLT 2.0 (`queryBinding="xslt2"`). They need
-  Saxon or equivalent, not libxslt.
-- Public-release gaps: every CVE value is `(U)`, and the CVEs carry a
-  per-value `ValueClassification` column. `CVEnumISMSAR` (SAR programs) is
-  empty. Unclassified SCI control systems (HCS, SI, TK, KLM, ...) are
-  present.
 
 ## ODNI ISM Convenience package (`ism-convenience/ISM/`)
 
 The same ISM build (`2021-NOVr2022-NOV`, build 228, 2023-06-09) with its
 dependent specifications merged in, extracted unmodified from
 `ISM-Public-Convenience-2022-DEC-Public.zip`. **Use this tree to run the
-rules.** The Standalone package above is missing 14 files that the
+rules.** The removed Standalone package was missing 14 files that the
 Schematron loads with `document('../../CVE/...')` and
 `../../Taxonomy/...`. Those are the value lists for ISMCAT, AUTHCAT, LIC,
 MN, ROLE and USAgency, plus the ISMCAT tetragraph taxonomies. The
@@ -107,3 +104,10 @@ separately.
   present in both is byte-identical. Only the generated `SchemaGuide/`
   HTML and `manifest.md5` differ. Standalone alone has
   `Documents/ISM/SignatureMemo.pdf`.
+- The XSL and Schematron are XSLT 2.0 (`queryBinding="xslt2"`). They need
+  Saxon or equivalent, not libxslt. With Saxon-HE 12.5, `ISM_XML.xsl` runs
+  all 52 `Examples/` documents with 0 errors and 0 failed assertions.
+- Public-release gaps: every CVE value is `(U)`, and the CVEs carry a
+  per-value `ValueClassification` column. `CVEnumISMSAR` (SAR programs) is
+  empty. Unclassified SCI control systems (HCS, SI, TK, KLM, ...) are
+  present. `CVE/LIC/CVEnumLicLicense.xml` has `specVersion="201508"`.

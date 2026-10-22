@@ -1,0 +1,24 @@
+{
+  "id": "ToIP-cbk9.5",
+  "title": "Oracle and TELs leak the linkage graph",
+  "description": "H4 plus user input: markings and classifier/portion linkage are classified; clearance TELs are a roster. Enclave-only oracle/PEP, private TELs with enclave witnesses, silent denial with owner notification.",
+  "status": "closed",
+  "priority": 1,
+  "issue_type": "bug",
+  "owner": "mark@reviewcommit.com",
+  "created_at": "2026-10-22T00:56:48.603691727Z",
+  "created_by": "agent",
+  "updated_at": "2026-10-22T01:12:29.340840695Z",
+  "closed_at": "2026-10-22T01:12:29.340840695Z",
+  "close_reason": "Addressed in design/ism-oracle.md revision 2",
+  "dependencies": [
+    {
+      "issue_id": "ToIP-cbk9.5",
+      "depends_on_id": "ToIP-cbk9",
+      "type": "parent-child",
+      "created_at": "2026-10-22T00:56:48.632020154Z",
+      "created_by": "agent",
+      "metadata": "{}"
+    }
+  ]
+}

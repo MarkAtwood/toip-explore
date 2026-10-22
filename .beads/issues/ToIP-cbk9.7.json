@@ -1,0 +1,24 @@
+{
+  "id": "ToIP-cbk9.7",
+  "title": "Verdict semantics depend on ISM role conventions",
+  "description": "R3/R4/R8/M3: PORTION+ROLLUP under-enforces; warnings appear as failed-assert; Schematron is a starter set; XSD not run. Release policy holds requiredPhases and failOn; verdict noViolationsFound; XSD step.",
+  "status": "closed",
+  "priority": 1,
+  "issue_type": "bug",
+  "owner": "mark@reviewcommit.com",
+  "created_at": "2026-10-22T00:56:49.746848538Z",
+  "created_by": "agent",
+  "updated_at": "2026-10-22T01:12:31.222330004Z",
+  "closed_at": "2026-10-22T01:12:31.222330004Z",
+  "close_reason": "Addressed in design/ism-oracle.md revision 2",
+  "dependencies": [
+    {
+      "issue_id": "ToIP-cbk9.7",
+      "depends_on_id": "ToIP-cbk9",
+      "type": "parent-child",
+      "created_at": "2026-10-22T00:56:49.779670093Z",
+      "created_by": "agent",
+      "metadata": "{}"
+    }
+  ]
+}

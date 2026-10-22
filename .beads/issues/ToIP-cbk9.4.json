@@ -1,0 +1,24 @@
+{
+  "id": "ToIP-cbk9.4",
+  "title": "Package choice: downgrade, supersession, version pin",
+  "description": "H1/F1/H2/F2/R5: extCritical misapplied; requester-chosen package allows downgrade; revoking a superseded package breaks old attestations; DESVersion warning-only. Governance release policy picks packages; NI2I succession; desVersionPattern.",
+  "status": "closed",
+  "priority": 1,
+  "issue_type": "bug",
+  "owner": "mark@reviewcommit.com",
+  "created_at": "2026-10-22T00:56:48.319902069Z",
+  "created_by": "agent",
+  "updated_at": "2026-10-22T01:12:27.833614476Z",
+  "closed_at": "2026-10-22T01:12:27.833614476Z",
+  "close_reason": "Addressed in design/ism-oracle.md revision 2",
+  "dependencies": [
+    {
+      "issue_id": "ToIP-cbk9.4",
+      "depends_on_id": "ToIP-cbk9",
+      "type": "parent-child",
+      "created_at": "2026-10-22T00:56:48.336490372Z",
+      "created_by": "agent",
+      "metadata": "{}"
+    }
+  ]
+}

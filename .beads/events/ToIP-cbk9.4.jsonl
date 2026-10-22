@@ -1,0 +1,2 @@
+{"id":"01a1611c-51c8-756f-a914-9cc1c032c0ae","issue_id":"ToIP-cbk9.4","event_type":"created","actor":"agent","old_value":"","new_value":"","created_at":"2026-10-22T00:56:48.328357977Z"}
+{"id":"01a1612a-aa58-77a6-b1bd-99c009188cf6","issue_id":"ToIP-cbk9.4","event_type":"closed","actor":"agent","old_value":"","new_value":"Addressed in design/ism-oracle.md revision 2","created_at":"2026-10-22T01:12:28.504503253Z"}

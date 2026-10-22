@@ -1,0 +1,24 @@
+{
+  "id": "ToIP-cbk9.6",
+  "title": "Standalone package not self-contained; phases not stable",
+  "description": "R1/R2/R6: 14 document() deps missing from Standalone; V13 has no phases; rendering XSLs need modes. Pin self-contained trees, verify all targets resolve, optional phaseXsl, credential entryPoints.",
+  "status": "closed",
+  "priority": 1,
+  "issue_type": "bug",
+  "owner": "mark@reviewcommit.com",
+  "created_at": "2026-10-22T00:56:48.949166629Z",
+  "created_by": "agent",
+  "updated_at": "2026-10-22T01:12:30.236420569Z",
+  "closed_at": "2026-10-22T01:12:30.236420569Z",
+  "close_reason": "Addressed in design/ism-oracle.md revision 2",
+  "dependencies": [
+    {
+      "issue_id": "ToIP-cbk9.6",
+      "depends_on_id": "ToIP-cbk9",
+      "type": "parent-child",
+      "created_at": "2026-10-22T00:56:48.966326197Z",
+      "created_by": "agent",
+      "metadata": "{}"
+    }
+  ]
+}

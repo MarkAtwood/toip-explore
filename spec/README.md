@@ -53,3 +53,29 @@ spec text), `dtgwg-trust-tasks-tf` `SPEC.md` (a generated copy of
 | `toip-general-glossary.md` | Spec-Up-T Markdown, `trustoverip/ctwg-general-glossary` main @ `73604cf` (`spec/`, 5 files in `specs.json` order + 215 term files) | CTWG General Glossary, Public Review Draft 01 |
 | `toip-kerisuite-glossary.md` | Spec-Up-T Markdown, `trustoverip/kerisuite-glossary` main @ `0da7b2c` (`spec/`, 5 files in `specs.json` order + 336 term files) | KERI Suite Glossary, Public Review Draft 01 |
 | `toip-terminology-governance-guide.md` | Spec-Up-T Markdown, `trustoverip/ctwg-terminology-governance-guide` main @ `77fdb38` (`spec/`, `specs.json` order + 11 term files) | ToIP Terminology Governance Guide v1.0.8 draft |
+
+## ODNI ISM (`ism/ISM/`)
+
+IC Information Security Marking (ISM) public standalone package, version
+`2021-NOVr2022-NOV` (ISM V2022-NOV), build 228, built 2023-06-09
+(`ism/ISM/ISMpackage.properties`). Extracted unmodified from
+`ISM-Public-Standalone.zip`.
+
+- Upstream URL: `https://www.dni.gov/files/documents/CIO/ICEA/Dec2022/ISM/ISM-Public-Standalone.zip`.
+  ODNI returns HTTP 403 to non-browser clients, so the zip was fetched on
+  2026-10-21 from the Wayback Machine capture
+  `https://web.archive.org/web/20260522215644id_/` of that URL.
+- Zip SHA-256 `29362fedb43f85b2d453977d76151bfec81875c9fbb60cd46867eb30004eea81`,
+  10967574 bytes. Its SHA-1 matches the Wayback CDX digest
+  `NWYQXCZ3SMPVW7H2743RMXSJF5PLBG3Q`. That digest is identical across 9
+  captures on `www.dni.gov` and `www.odni.gov` from 2025-02-21 to
+  2026-05-22.
+- The zip extracts to 1221 files. Every well-formed entry in ODNI's
+  `ism/ISM/manifest.md5` passes `md5sum -c`: 1219 entries, with 2 lines
+  malformed.
+- The XSL and Schematron are XSLT 2.0 (`queryBinding="xslt2"`). They need
+  Saxon or equivalent, not libxslt.
+- Public-release gaps: every CVE value is `(U)`, and the CVEs carry a
+  per-value `ValueClassification` column. `CVEnumISMSAR` (SAR programs) is
+  empty. Unclassified SCI control systems (HCS, SI, TK, KLM, ...) are
+  present.

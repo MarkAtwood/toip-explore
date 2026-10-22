@@ -1,0 +1,1804 @@
+# DTG Credentials Core Specification
+
+_Version:_ 1.0  
+_Document Status:_ Working Draft 0.6.0  
+_GitHub:_ <https://github.com/trustoverip/dtgwg-cred-spec>
+<!-- _DOI:_ To be assigned when this specification reaches ToIP Approved Deliverable status. See https://lf-toip.atlassian.net/wiki/spaces/HOME/pages/767787009/ToIP+Approved+Deliverable+Process#Persistent-DOI-Link -->
+
+_Editors:_
+
+- Glenn Gore, Affinidi Pte Ltd
+- Martina Kolpondinos, Kosma Connect
+- Alberto Leon, Applied Technology Lab at Harvard University
+- Brendan A. Miller, Applied Technology Lab at Harvard University
+- Drummond Reed, First Person Cooperative
+- Geoff Turk, ic3 Software
+
+_Contributors:_
+
+- Sankarshan Mukhopadhyay, QBF Consulting LLP
+- The participants of the Decentralized Trust Graph Working Group (DTGWG)
+
+**Abstract**
+
+A Decentralized Trust Graph (DTG) is a graph of cryptographically verifiable [trust relationships](https://glossary.trustoverip.org/#term:trust-relationships) between entities (people, communities, devices, and software agents (including AI agents)). This specification defines seven **DTG Core Credential** types, expressed as W3C verifiable credentials. The **Verifiable Membership Credential (VMC)**, the **Verifiable Relationship Credential (VRC)** and the **Verifiable Delegation Credential (VDC)** are edge credentials: each is one half of a bi-directional pair, and the pair establishes a graph edge representing community membership, a peer-to-peer relationship, or the appointment of one entity to act in another's name. The **Verifiable Invitation Credential (VIC)** authorizes onboarding of a prospective member, bootstrapping a node into a community. The **Verifiable Persona Credential (VPC)** associates [[ref: personas]] with existing relationships for intentional correlation. The **Verifiable Statement Credential (VSC)** carries a signed statement about a node under a governed predicate; its first two predicate profiles are the **Verifiable Endorsement Credential (VEC)** and the **Verifiable Witness Credential (VWC)**. The **Verifiable Authority Credential (VAC)** confers permission to act within a named scope and may be attenuated by its holder so that an agent or device carries strictly less authority than the party it acts for. The DTG credentials can be presented in privacy-preserving ways using zero-knowledge proof mechanisms. Such presentations can support holders to limit information they disclose and reduce correlation across contexts. The specification also defines a mechanism for associating credentials with the [trust task](https://glossary.trustoverip.org/#term:trust-task) context in which they were issued, allowing its meaning to be interpreted in the context of that exchange.
+
+**Intellectual Property Rights**
+
+This specification is provided under the [Joint Development Foundation (JDF) charter](https://cdn.platform.linuxfoundation.org/agreements/ToIP.pdf) for [Trust Over IP](https://trustoverip.org) (ToIP) and is subject to the intellectual property rights policy of the **Decentralized Trust Graph Working Group (DTGWG)**:
+
+_Copyright:_ [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)  
+_Patent:_ W3C Mode (based on the [W3C Patent Policy](https://www.w3.org/Consortium/Patent-Policy-20040205/))  
+_Source Code:_ [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+THESE MATERIALS ARE PROVIDED “AS IS.” The parties expressly disclaim any warranties (express, implied, or otherwise), including implied warranties of merchantability, non-infringement, fitness for a particular purpose, or title, related to the materials. The entire risk as to implementing or otherwise using the materials is assumed by the implementer and user. IN NO EVENT WILL THE PARTIES BE LIABLE TO ANY OTHER PARTY FOR LOST PROFITS OR ANY FORM OF INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY CHARACTER FROM ANY CAUSES OF ACTION OF ANY KIND WITH RESPECT TO THIS DELIVERABLE OR ITS GOVERNING AGREEMENT, WHETHER BASED ON BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, AND WHETHER OR NOT THE OTHER MEMBER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## Introduction
+
+*This section is informative.*
+
+A [[ref: decentralized trust graph]] (DTG) is a graph of trust relationships between people, organizations, devices, and AI agents in which every node and every edge can be cryptographically verified. This specification defines the **DTG Core Credentials**: seven [[ref: VC]] types that are used to create, annotate, and govern access within that graph. These credentials are W3C-compliant verifiable credentials and may be presented using standard VC presentation methods when privacy preservation is not desired. They should, however, be presented using **privacy-preserving zero-knowledge proofs (ZKPs)** — of personhood, community membership, and facts about relationships — whenever privacy preservation is desired, since ZKPs are the only inherently privacy-preserving option for proof of personhood with DTG credentials (cf. [Personhood Credentials, Adler et al. 2024](https://arxiv.org/abs/2408.07892)). Used this way, ZKPs allow holders to prove what they need to prove from the perspective of the entities involved while maintaining minimal correlation across contexts.
+
+The seven credential types are:
+
+- [[ref: VRC]] (verifiable relationship credential) — attests to a relationship between two entities; the relationship is verified through a bi-directional pair of VRCs
+- [[ref: VMC]] (verifiable membership credential) — attests to the membership of an entity in a community; membership is verified through a bi-directional pair of VMCs
+- [[ref: VDC]] (verifiable delegation credential) — attests that one entity has appointed another to act in its name, for a bounded set of acts; the delegation is verified through a grant and a matching acceptance
+- [[ref: VIC]] (verifiable invitation credential) — authorizes onboarding of a prospective member, bootstrapping a node into a community
+- [[ref: VPC]] (verifiable persona credential) — links a [[ref: persona]] to a relationship
+- [[ref: VSC]] (verifiable statement credential) — a signed statement about a node under a governed predicate; the [[ref: VEC]] (endorsement) and [[ref: VWC]] (witness attestation of an edge) are its first two predicate profiles
+- [[ref: VAC]] (verifiable authority credential) — states what its subject may *do* at a named scope, and may be attenuated by its holder to equip an agent or device with strictly less authority than they hold themselves
+
+The first three are [[ref: DTG edge credentials]]: each is one half of a bi-directional pair, and the pair forms a [[ref: DTG edge]]. The other four are each complete on the issuer's signature alone. That is the only grouping this specification makes, and it is a property of the credentials rather than a taxonomy: it does not appear in credential schemas, and the formal type hierarchy has only one abstract parent, `DTGCredential`.
+
+This Working Draft supersedes the [v0.3 proposal draft](https://github.com/trustoverip/dtgwg-cred-tf/blob/main/dtg.md) published in the [DTG Credentials Task Force repository](https://github.com/trustoverip/dtgwg-cred-tf).
+
+> **Note on identifiers:** The DTG model is designed to be compatible with [verifiable identifiers](https://glossary.trustoverip.org/#term:verifiable-identifier) (VIDs) in general, consistent with the ToIP Trust Spanning Protocol. This version of the specification uses [decentralized identifiers](https://www.w3.org/TR/did-1.0/) (DIDs) exclusively. Future versions may generalize to other VID types (such as X.509 certificates or KERI AIDs) as ecosystem demand emerges.
+
+### Related Specifications
+
+This specification is designed to work alongside the following companion specifications of the [[ref: DTGWG]]. Those marked *(planned)* have not been published yet; this section will be updated with references as they become available.
+
+- **[Trust Tasks](https://github.com/trustoverip/dtgwg-trust-tasks-spec)** — the framework for verifiable, transport-agnostic task exchanges between parties, published as a Working Draft. It defines how a credential names and binds the exchange it cites, and the outcome evidence that shows that exchange completed, on which this specification's [Trust Task Context Binding](#trust-task-context-binding) relies. Individual Trust Task specifications conforming to it are published in the [Trust Tasks registry](https://trusttasks.org/).
+
+- **[Verifiable Trust Infrastructure (VTI)](https://github.com/trustoverip/dtgwg-vti-spec)** — the system specification into which DTG components are composed, published as a Working Draft. It binds the credentials of this specification to the nodes that issue, hold, present and verify them, and states the requirements that hold only across a composition — including what a relying party may conclude from a credential together with the outcome evidence of the exchange it cites.
+
+- **DTG Core Trust Task Protocols** *(planned)* — DTG-specific Trust Task specifications to offer, issue, request, present, and revoke the DTG Core Credentials defined in this specification.
+
+- **DTG Verifiable Data Structures** *(planned)* — will define [[ref: verifiable data structure]] (VDS) types that are exchanged over DTG relationships but are not DTG credentials, including:
+    - [[ref: r-card]] (relationship card) — a combination of human-readable and machine-readable data describing its publisher, exchanged in conjunction with [[ref: VRC]]s; a modern, self-updating analog of a [vCard](https://en.wikipedia.org/wiki/VCard).
+    - **Agent card** — a VDS describing the identity and capabilities of an AI agent (its provider, capabilities, and skills), similar in spirit to an r-card but modeled on the [Agent2Agent (A2A) protocol's AgentCard](https://agent2agent.info/docs/concepts/agentcard/) discovery document.
+
+- **[DTG VSC Predicate Registry](https://github.com/trustoverip/dtgwg-vsc-registry)** — a repo-driven registry rather than a specification, published at `https://registry.trustoverip.org/dtg/vsc/`: one definition file per [[ref: VSC]] predicate, generated into a human-readable vocabulary and a machine-readable accept-list for verifiers, governed by pull request under stated admission criteria. It holds every predicate profile in the DTG namespace, including the two core profiles this specification names, the VEC and the VWC. It also hosts and freezes the credential `@context` this specification requires (see [Base Structure](#base-structure)); the specification's editors decide what a context version contains. This specification defines the statement mechanism and how a verifier handles predicates; the registry defines what may be said.
+
+### Specification Versioning
+
+This specification distinguishes two version numbers that read as if they mean the same thing but do not:
+
+- **`_Version:_`** states the version of this specification that the working group is converging toward — the number a wider ratifying body confirms when this specification reaches Working Group Approved Deliverable or ToIP Approved Deliverable status. It changes only when the specification is re-targeted, not with each Working Draft revision.
+- **`_Document Status:_`** carries the semantic version of *this Working Draft* — `Working Draft MAJOR.MINOR.PATCH` — and is what editors and implementers use to coordinate day-to-day while the specification converges. It is the version referenced everywhere below and in [Compatibility Rules](#compatibility-rules).
+
+Document Status follows [Semantic Versioning 2.0.0](https://semver.org/):
+
+- **MAJOR** — a change that breaks conformance for existing implementations, such as removing or tightening a REQUIRED property, changing the semantics of an existing credential type, or removing a credential type.
+- **MINOR** — a backward-compatible addition, such as a new OPTIONAL property, a new credential type, or a new informative section.
+- **PATCH** — an editorial or clarifying change with no effect on conformance.
+
+#### Compatibility Rules
+
+A change to this Working Draft MUST be classified as either backward-compatible or breaking:
+
+- A **backward-compatible** change — for example, adding an OPTIONAL property, relaxing a constraint, or adding a permitted enumeration value to a non-discriminating field — MUST result in a MINOR increment to `Document Status`.
+- A **breaking** change — for example, adding or removing a REQUIRED property, removing a permitted enumeration value, narrowing a constraint, or changing the semantics of an existing credential type — MUST result in a MAJOR increment to `Document Status`, with MINOR reset to `0`.
+
+Before this Working Draft's first ratification, a breaking change MAY be released as a MINOR increment instead of a MAJOR one, and `Document Status`'s MAJOR component MUST NOT advance past `0` until ratification — SemVer 2.0.0 §4 already treats `0.y.z` as carrying no compatibility guarantee, so there is no need to spend a MAJOR increment confirming that. See [Ratification and the Stable Release Line](#ratification-and-the-stable-release-line) below for what happens to `Document Status` and `_Version:_` at and after ratification.
+
+A holder or verifier conformant to Document Status `M.N` MUST accept a credential issued under any earlier Document Status `M.K` where `K ≤ N`, and SHOULD accept a credential carrying an OPTIONAL property it does not recognize — introduced by a later MINOR version than the one it implements — rather than rejecting the credential solely for that property's presence. This specification does not embed its own version number in a credential's `@context` or `type`. The credential `@context` is versioned on its own axis — one frozen document per version, `https://registry.trustoverip.org/dtg/context/v1` for this Working Draft (see [Base Structure](#base-structure)) — and a revision that adds, renames or retypes a term credentials carry is accompanied by a new context version, so that a credential issued under incompatible semantics is also structurally distinguishable. A verifier implementing one MAJOR version MUST NOT assume it can safely interpret a credential issued under a different one.
+
+> **Note on cross-specification versioning:** The DTGWG's specifications — this specification and its planned companions listed above — each follow their own semantic versioning process, and each uses the same `_Version:_` / `_Document Status:_` split. The editors have deliberately chosen **not** to synchronize Document Status numbers across specifications; a MAJOR release of one does not imply, require, or correspond to any particular release of another.
+>
+> Where this specification's conformance requirements depend on a mechanism defined by a companion specification — for example, the `taskContext` binding described in [Trust Task Context Binding](#trust-task-context-binding), which depends on the exchange-citation and outcome-evidence mechanisms of the **Trust Tasks** specification — this specification instead states the **minimum Document Status of that companion specification** with which this Working Draft is compatible. The companion specification is expected to do the same in reverse, stating the minimum Document Status of this specification with which it is compatible. Implementers integrating both specifications MUST check both stated minimums rather than assuming that matching or adjacent version numbers imply compatibility.
+
+> **Note on version history:** This specification's earlier Working Drafts were informally numbered "01" and "02", before this semantic versioning scheme was adopted; those ordinals do not correspond to `0.1.0`/`0.2.0`. This Working Draft's Document Status numbering began at `0.4.0` — continuing from the [pre-migration `v0.3` proposal draft](https://github.com/trustoverip/dtgwg-cred-tf/blob/main/dtg.md) it supersedes (see Introduction), rather than restarting at `0.1.0`, which would collide with that predecessor's own version number. `_Version:_` is set to `1.0`, the release this Working Draft is converging toward; it is not yet ratified.
+
+#### Ratification and the Stable Release Line
+
+At the moment a wider body ratifies this specification as a Working Group Approved Deliverable or ToIP Approved Deliverable, `Document Status`'s MAJOR component crosses from `0` to `1`, the header's status label changes from `Working Draft` to the ratified label, and `_Version:_` is confirmed at the matching `MAJOR.MINOR`. From that point on, `_Version:_` and `Document Status`'s `MAJOR.MINOR` carry the same value — they differ only in the status label — until a breaking change resumes drafting toward the next MAJOR: `Document Status` advances to the new `MAJOR.0.0` immediately, per [Compatibility Rules](#compatibility-rules), but `_Version:_` stays at the last-ratified release until that new line is itself ratified. This is the same convention adopted across the DTGWG's specifications; see [Ratification and the Stable Release Line](https://github.com/trustoverip/dtgwg-trust-tasks-spec/blob/main/spec/body.md#ratification-and-the-stable-release-line) in the Trust Tasks specification for the full rationale.
+
+## Requirements Language
+
+The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in this document are to be interpreted as described in [IETF RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119).
+
+[//]: # 'This file, named "terms-and-definitions-intro.md" is mandatory and should not be deleted.'
+
+## Terminology
+
+*This section is informative.*
+
+This section defines the terms required for a reader to understand this specification. These terms and definitions are drawn from the [DTG Glossary](https://lf-toip.atlassian.net/wiki/spaces/HOME/pages/442073089/DTG+Glossary) maintained by the [[ref: DTGWG]] and are managed using the Spec-Up-T glossary features.
+
+Any hyperlinked term not included in this section is referenced from one of the following glossaries:
+
+- [ToIP Main Glossary](https://glossary.trustoverip.org)
+- [ToIP General IT Glossary](https://trustoverip.github.io/ctwg-general-glossary)
+
+[[def: cloud VTA, cloud VTAs]]
+
+~ A [[ref: VTA]] that operates on a network server, meaning a system that provides services to other computers over a network, such as [cloud computing](https://en.wikipedia.org/wiki/Cloud_computing) infrastructure. Unlike a [[ref: local VTA]], a cloud VTA should be highly available and accessible for routing private channel messages and other [trust tasks](https://glossary.trustoverip.org/#term:trust-tasks). If a cloud VTA represents an individual, it operates as a server-based [user agent](https://glossary.trustoverip.org/#term:user-agent) (similar to [webmail](https://en.wikipedia.org/wiki/Webmail)). If a cloud VTA represents a [[ref: VTC]], it will typically be controlled by the [[ref: PNMs]] or [[ref: VTA networks]] representing VTC members. Contrast with [[ref: local VTA]].
+
+[[def: CTA, community trust anchor, CTAs, community trust anchors]]
+
+~ A person or a [[ref: VTA]] invited by an [[ref: initiator]] to serve as a [trust anchor](https://glossary.trustoverip.org/#term:trust-anchor) for a [[ref: VTC]]. A CTA is issued a [[ref: VMC]] on accepting the trust anchor role, and becomes a [[ref: VTC member]] by issuing the reverse VMC that completes the membership edge.
+
+[[def: community VTA, community VTAs]]
+
+~ A [[ref: VTA]] that represents the [[ref: DTG node]] for a [[ref: VTC]]. Contrast with [[ref: personal VTA]].
+
+[[def: community VTA network, community VTA networks]]
+
+~ A [[ref: VTA network]] that controls the [[ref: VTA]] representing a [[ref: VTC]] as a [[ref: DTG node]]. A community VTA network will typically consist of multiple [[ref: VTC members]], such as [[ref: CTAs]], each operating their own [[ref: PNMs]] or [[ref: personal VTA networks]]. Contrast with [[ref: personal VTA network]].
+
+[[def: correlation scope, correlation scopes]]
+
+~ The breadth over which the holder of a [[ref: DTG verifiable identifier]] intends that identifier to be correlated. Correlation scope is **declared by the holder**, in the `issuerScope` property of every credential issued under the identifier — it is not inferred from the identifier's value, from where the identifier was encountered, or from the role its holder plays, though a role may rule out declarations it would make false. It is ordered from narrowest to widest and takes one of three values: `pairwise` (known to exactly one counterparty), `directed` (known to a set of counterparties the holder chooses) or `public` (correlation unbounded; ordinarily published so that it can be found). Correlation scope answers *how widely may this identifier be correlated*; the credential in which the identifier appears answers *what role its holder plays*. The two are independent, and conflating them is what the retired R-DID / M-DID / C-DID / P-DID identifier types did.
+
+[[def: DTG, decentralized trust graph, DTGs]]
+
+~ A [heterarchical](https://en.wikipedia.org/wiki/Heterarchy) graph of [trust relationships](https://glossary.trustoverip.org/#term:trust-relationship) defined by [[ref: DTG edge credentials]]. Each trust relationship forms a [[ref: DTG edge]] that connects two [[ref: DTG nodes]]. The open standard specifications for the DTG are being developed by the [[ref: DTGWG]].
+
+[[def: DTGWG, Decentralized Trust Graph Working Group]]
+
+~ A working group of the [Trust Over IP](https://trustoverip.org/) (ToIP) project of [Linux Foundation Decentralized Trust](https://www.lfdecentralizedtrust.org/) responsible for defining the specifications for all aspects of an open standard [[ref: DTG]]. The DTGWG charter is published on the [DTGWG home page](https://lf-toip.atlassian.net/wiki/spaces/HOME/pages/257785857/Decentralized+Trust+Graph+Working+Group).
+
+[[def: DTG credential, DTG credentials]]
+
+~ A [[ref: VC]] defined by the [[ref: DTG Credentials Specification]] that is used to create or annotate a [trust relationship](https://glossary.trustoverip.org/#term:trust-relationship) in a [[ref: DTG]]. The [[ref: DTG Credentials Specification]] defines seven concrete types, of which the [[ref: VRC]], [[ref: VMC]], and [[ref: VDC]] are [[ref: DTG edge credentials]].
+
+[[def: DTG Credentials Specification]]
+
+~ A [technical specification](https://glossary.trustoverip.org/#term:technical-specification) from the [[ref: DTGWG]] that defines the requirements for [[ref: DTG credentials]]. This document is the current Working Draft of that specification; it supersedes the [v0.3 proposal draft](https://github.com/trustoverip/dtgwg-cred-tf/blob/main/dtg.md).
+
+[[def: DTG edge, DTG edges]]
+
+~ In a [[ref: DTG]], a DTG edge represents a [cryptographically verifiable](https://glossary.trustoverip.org/#term:cryptographically-verifiable) [trust relationship](https://glossary.trustoverip.org/#term:trust-relationship) between two [[ref: DTG nodes]].
+
+[[def: DTG edge credential, DTG edge credentials]]
+
+~ A type of [[ref: DTG credential]] that identifies one direction of a bidirectional [trust relationship](https://glossary.trustoverip.org/#term:trust-relationship) in a [[ref: DTG]]. DTG edge credentials are issued in pairs, one in each direction, to form a [[ref: DTG edge]] connecting two [[ref: DTG nodes]]. There are three subtypes of DTG edge credentials: [[ref: VRCs]], [[ref: VMCs]], and [[ref: VDCs]].
+
+[[def: VIC, DTG invitation credential, verifiable invitation credential, DTG invitation credentials, VICs]]
+
+~ A type of [[ref: DTG credential]] issued by an existing [[ref: VTN]], [[ref: VTC]], or [[ref: VTC member]] to invite a new member. The purpose of DTG invitation credentials is to automate onboarding of a new member by a [[ref: VTA]]. A proof of the DTG invitation credential is intended to at least partially satisfy the membership requirements (some VTCs may have additional membership requirements). There are two subtypes of DTG invitation credentials: [[ref: VTC invitation credentials]] and [[ref: VTN invitation credentials]].
+
+[[def: DTG node, DTG nodes]]
+
+~ In a [[ref: DTG]], a DTG node represents an entity that participates in [trust relationships](https://glossary.trustoverip.org/#term:trust-relationship) with other DTG nodes. DTG node types include persons, devices, AI agents, [[ref: VTCs]], [[ref: VTNs]], and services — a service being an operated endpoint that holds its own identifier and participates in trust relationships in its own right, such as a message mediator, a DID host, or a trust registry, as distinct from the [[ref: VTSP]] that operates it. The list is illustrative rather than closed: what makes something a DTG node is that it holds a [[ref: DTG verifiable identifier]] and forms [[ref: DTG edges]], not membership of an enumerated set. Being a node does not make something a possible target of every credential — a [[ref: VMC]] in particular binds a member to a node that *has* members, which not every node kind does. A DTG node is always identified by at least one [[ref: DTG verifiable identifier]] (VID) and can be interacted with via a [[ref: VTA]].
+
+[[def: DTG verifiable identifier, DTG verifiable identifiers, VID, VIDs]]
+
+~ A [verifiable identifier](https://glossary.trustoverip.org/#term:verifiable-identifier) (VID) used to identify a [[ref: DTG node]]. The DTG specifications use [decentralized identifiers](https://en.wikipedia.org/wiki/Decentralized_identifier) (DIDs) for verifiable identifiers. A VID is not typed by the role its holder plays — that is established by the credentials the identifier appears in. What a VID carries is a declared [[ref: correlation scope]]: how widely its holder intends it to be correlated, declared in the `issuerScope` property of every credential issued under it. The R-DID / M-DID / C-DID / P-DID identifier types used in earlier drafts are retired.
+
+[[def: IDVC, identity verification credential, IDVCs, identity verification credentials]]
+
+~ A [[ref: VC]] issued by an [[ref: IDVP]] in order to meet the [identity proofing](https://glossary.trustoverip.org/#term:identity-proofing) requirements established by a [[ref: VTC]] for a prospective new [[ref: VTC member]]. Although IDVCs may be commonly used by VTCs, they are not a standard [[ref: DTG credential]].
+
+~ A VTC may authorize a prospective new member to obtain an IDVC by issuing a [[ref: VTC invitation credential]] to the prospect's proposed member identifier. The prospect may present a proof of the VTC invitation credential to the IDVP. If the IDVP successfully completes the identity proofing process, the IDVP will issue the IDVC to that same identifier.
+
+[[def: IDVP, identity verification provider, IDVPs, identity verification providers]]
+
+~ A commercial provider of [identity verification services](https://en.wikipedia.org/wiki/Identity_verification_service). Examples of providers of identity verification services include Veriff, Jumio, Yoti, Onfido, ID.me, Socure, and Trulioo. If a VTC has a requirement for new members to obtain a qualified [[ref: IDVC]], the VTC [governing body](https://glossary.trustoverip.org/#term:governing-body) can determine the qualifications an IDVP must meet to be approved to issue an IDVC acceptable to the [[ref: VTC]].
+
+[[def: initiator, initiators]]
+
+~ A person or persons who initiate the establishment of a new [[ref: VTC]]. Depending on the policies governing the VTC, the initiator(s) will typically generate the identifier that identifies the VTC, instantiate the [[ref: VTA]] representing the VTC, and invite the set of [[ref: CTAs]] who may then begin inviting other [[ref: VTC members]].
+
+[[def: local VTA, local VTAs]]
+
+~ A [[ref: VTA]] that operates on a local device at the edge of the network, such as a smartphone, laptop, smart TV, or smart car. A local VTA is typically a [user agent](https://glossary.trustoverip.org/#term:user-agent) (similar to a browser or an email client) used by a single person. A local VTA used by a person is also called a [[ref: PNM]]. Contrast with [[ref: cloud VTA]].
+
+[[def: persona, personas]]
+
+~ An [identity](https://glossary.trustoverip.org/#term:identity) controlled by the person it identifies (or their [delegate](https://glossary.trustoverip.org/#term:delegation)) in order to manage [correlation privacy](https://glossary.trustoverip.org/#term:correlation-privacy). In a [[ref: DTG]], a persona has a unique [verifiable identifier](https://glossary.trustoverip.org/#term:verifiable-identifier), ordinarily declared with a `directed` [[ref: correlation scope]], that may be shared using a [[ref: VPC]].
+
+~ A persona is what a `directed` declaration is for: an identifier the holder deliberately uses across a set of counterparties they choose, so as to be recognized as the same party by that set and by no one else. Membership in a [[ref: VTC]] does not require a persona — a member who declares `pairwise` toward the community has none — but a member who wishes to be recognized as the same person by other members, or across communities, is asserting a persona and declares the identifier `directed` accordingly.
+
+[[def: PNM, personal network manager, PNMs, personal network managers]]
+
+~ A [user agent](https://en.wikipedia.org/wiki/User_agent) that serves as a [[ref: VTA]] for an individual person to control and manage their [trust relationships](https://glossary.trustoverip.org/#term:trust-relationship) and [trust tasks](https://glossary.trustoverip.org/#term:trust-tasks) within one or more [[ref: VTCs]] and [[ref: VTNs]]. A PNM may be either a [[ref: local VTA]] or a [[ref: cloud VTA]]. If a person uses more than one PNM—for example a local VTA on multiple devices—these PNMs may work together with a cloud VTA as a [[ref: personal VTA network]]. Also sometimes called a "VTA client." VTA clients may also serve as "Community Network Managers" managing elements of a VTC.
+
+[[def: PNV, personal network vault]]
+
+~ A digital vault (sometimes called a wallet) where a person stores their [[ref: DTG credentials]] and associated signing keys for the [[ref: DTG verifiable identifiers]] (DIDs) associated with those credentials. This vault is under the exclusive control of that person, although the person may sometimes choose to delegate use of their credentials or keys to a [[ref: VTA]], such as a [[ref: PNM]], for specific purposes.
+
+[[def: personal trust network, personal trust networks]]
+
+~ The set of personal [trust relationships](https://glossary.trustoverip.org/#term:trust-relationship) represented by [[ref: DTG edges]] that a person has with other [[ref: DTG nodes]], e.g., other persons, devices, AI agents, or [[ref: VTCs]]. A person manages their personal trust network with their [[ref: PNM]].
+
+[[def: personal VTA, personal VTAs]]
+
+~ A [[ref: VTA]] that represents the [[ref: DTG node]] for an individual person. Contrast with [[ref: community VTA]].
+
+[[def: personal VTA network, personal VTA networks]]
+
+~ A [[ref: VTA network]] representing a person as a [[ref: DTG node]]. For example, a personal VTA network might consist of a [[ref: PNM]] on a smartphone, another PNM on a laptop, and a [[ref: cloud VTA]] hosted by a [[ref: VTSP]]. Contrast with [[ref: community VTA network]].
+
+[[def: PHC, personhood credential, PHCs, personhood credentials]]
+
+~ A digital credential used to provide [proof of personhood](https://en.wikipedia.org/wiki/Proof_of_personhood), i.e., that the holder of the credential is a real unique person (unique at least in the scope of the PHC issuer). The general concept of a PHC was proposed in an August 2024 paper called [Personhood Credentials](https://arxiv.org/abs/2408.07892).
+
+~ In the context of a [[ref: DTG]], a personhood credential is implemented as the community-issued [[ref: VMC]] of a membership edge in a [[ref: VTC]] whose governance specifies that members must be real humans who have exactly one membership in that VTC. VTCs who implement such policies may themselves be members of a [[ref: VTN]] that enforces network-wide policies for VMCs to qualify as PHCs.
+
+[[def: PEP, policy enforcement point, PEPs]]
+
+~ The policy engine for a [[ref: VTC]] that enforces the community's policies for issuance and revocation of [[ref: DTG credentials]].
+
+[[def: r-card, relationship card, r-cards, relationship cards]]
+
+~ A [[ref: VDS]] containing a combination of human-readable and machine-readable data describing the publisher. R-cards are typically exchanged in conjunction with [[ref: VRCs]]. As a VDS, an r-card may be encapsulated in a standard [[ref: VC]]. One use of r-cards is to serve as a modern, self-updating version of a [vCard](https://en.wikipedia.org/wiki/VCard). The open standard specification for r-cards will be a deliverable of the [[ref: DTGWG]].
+
+[[def: relationship invitation, relationship invitations]]
+
+~ A process by which two or more [entities](https://glossary.trustoverip.org/#term:entity) exchange [[ref: DTG verifiable identifiers]] (VIDs) in order to form a [cryptographically verifiable](https://glossary.trustoverip.org/#term:cryptographically-verifiable) [connection](https://glossary.trustoverip.org/#term:connection), such as by scanning a [QR code](https://glossary.trustoverip.org/#term:qr-code) (in person or remotely) or clicking a [deep link](https://glossary.trustoverip.org/#term:deep-link). Relationship invitations may be made by issuing a [[ref: VTC invitation credential]] or a [[ref: VTN invitation credential]].
+
+~ Also known as an [out-of-band introduction](https://glossary.trustoverip.org/#term:out-of-band-introduction) (OOBI).
+
+[[def: VAC, DTG authority credential, verifiable authority credential, DTG authority credentials, VACs]]
+
+~ A type of [[ref: DTG credential]] that confers **authority**: it states what its subject may *do* at a named scope, as distinct from asserting something *about* the subject (an [[ref: VEC]]) or establishing that the subject *is* connected to a node (a [[ref: VMC]] or [[ref: VRC]]). A VAC names a scope — a [[ref: DTG node]] or a resource governed by one — and the actions the subject is permitted to take within it. A VAC may be **attenuated**: unless it forbids this, its holder may derive a further VAC conferring a subset of what they hold, bound to a narrower scope and a shorter validity period, without returning to the original issuer. A VAC is granted for a limited period and revocably: it is withdrawn by expiry or by revocation by its issuer, and revoking one withdraws every VAC attenuated from it. Authority is not delegation: a VAC says the subject may act, in their own name, within the scope granted; it does not authorize acting *on behalf of* the issuer.
+
+<!-- ~ [[tref: ToIP_Glossary, verifiable identifiers, verifiable identifier]]
+
+~ Note: This is a tref example. The term "verifiable identifier" is imported from the ToIP external glossary. -->
+
+[[def: VC, verifiable credential]]
+
+~ A verifiable credential is a tamper-evident credential that has authorship that can be cryptographically verified.
+
+~ See the [[xref: ToIP_Glossary, credential]] specification for more details.
+
+[[def: VDS, verifiable data structure, verifiable data structures]]
+
+~ A [data structure](https://en.wikipedia.org/wiki/Data_structure) digitally signed by the publisher so that subscribers are able to [cryptographically verify](https://glossary.trustoverip.org/#term:cryptographically-verifiable) the authenticity of both the original and any updates. A [[ref: VC]] is one kind of VDS. An [[ref: r-card]] is another type of VDS.
+
+~ Note: One kind of VDS, such as a verifiable credential, can contain another type of VDS, such as an r-card.
+
+[[def: VDC, verifiable delegation credential, VDCs, verifiable delegation credentials]]
+
+~ A [[ref: DTG edge credential]] that attests that one entity (the delegator) has appointed another entity (the delegate) to act in the delegator's name, for a bounded set of acts, for a limited period, revocably. Within that scope, what the delegate does is attributed to the delegator.
+
+~ A VDC expresses delegation, not authority. Authority is a matter of what a party may do **as itself**; delegation is a matter of whether a party may act **in another's name**. Neither implies the other: a service permitted to read a person's mailbox has not thereby been appointed to send mail as that person. A VDC therefore never widens what may be done — a delegate cannot do in the delegator's name what the delegator could not do itself. Authority is conferred by the [[ref: VAC]], which a VDC never stands in for and never supplies.
+
+~ A VDC neither carries authority nor confers it. Nothing the delegator holds is copied to the delegate: a verifier substitutes the delegator for the delegate and then asks whether *the delegator* may perform the act. The reach of a delegation is therefore the intersection of what the delegator may do and what the VDC appoints the delegate for.
+
+~ A VDC attests only to the existence and bounds of the appointment; the act of exercising it is an invocation carried out within a [trust task](https://glossary.trustoverip.org/#term:trust-tasks), not a DTG credential.
+
+~ For example, a person may issue a VDC to an AI agent appointing it to correspond in their name within a specific [[ref: VTC]], for a specific set of acts, for a specific period.
+
+[[def: VEC, verifiable endorsement credential, VECs, verifiable endorsement credentials]]
+
+~ A [[ref: VSC]] under the `dtg:endorses` predicate profile, by which one party to a [[ref: DTG edge]] trust relationship issues verifiable assertions about the counterparty. The "verifiability" applies to cryptographic assurance in the issuer's digital signature, not to the truth of the assertions (which must be evaluated independently). The assertion vocabulary for a VEC may be defined by a [[ref: VTC]] or a [[ref: VTN]]. VECs can be used in conjunction with other [[ref: DTG credentials]] as a basis for a contextual [reputation system](https://glossary.trustoverip.org/#term:reputation-system).
+
+[[def: VMC, verifiable membership credential, VMCs, verifiable membership credentials]]
+
+~ A [[ref: DTG edge credential]] that defines membership in a [[ref: VTC]]. VMCs are issued in pairs, one in each direction. In the community-issued VMC, the issuer is identified with the VTC's own identifier and the member is the subject; the member chooses the identifier it is named by, and the [[ref: correlation scope]] it declares for it. In the member-issued VMC, those roles are reversed: the member issues from the same identifier by which it was named as subject, and the VTC's identifier is the subject. The member-issued VMC acknowledges a specific community-issued VMC and is the member's consent to the membership. Whether a verifier treats a VMC as an edge of a particular graph is determined under the Edge Verifiability section of this specification.
+
+~ For example, a VMC issued by a VTC whose governance specifies that the holder of the credential must be a real person who has exactly one membership in the scope of that VTC can serve as a [[ref: PHC]].
+
+[[def: VPC, verifiable persona credential, VPCs, verifiable persona credentials]]
+
+~ A [[ref: DTG credential]] that enables one party to a [[ref: DTG edge]] relationship to assert a [[ref: persona]] to the counterparty. The issuer of the VPC is identified with an identifier ordinarily declared at a `directed` [[ref: correlation scope]]. The counterparty (holder) can now prove that the counterparty knows the issuer in the context of that persona. Asserting a persona is how an individual controls intentional correlation deliberately, rather than acquiring it as a side effect of reusing an identifier.
+
+[[def: VRC, verifiable relationship credential, VRCs, verifiable relationship credentials]]
+
+~ A [[ref: DTG edge credential]] that represents one half of a bidirectional peer-to-peer [trust relationship](https://glossary.trustoverip.org/#term:trust-relationship) in a [[ref: DTG]]. Each peer chooses the identifier it appears under and the [[ref: correlation scope]] it declares for it; the two halves need not agree. Whether a verifier treats a VRC as an edge of a particular graph is determined under the Edge Verifiability section of this specification, which defines that property with respect to the anchor set a verifier accepts.
+
+[[def: VSC, verifiable statement credential, VSCs, verifiable statement credentials]]
+
+~ A [[ref: DTG credential]] that carries a signed statement by one [[ref: DTG node]] about another, in the form of a subject, a predicate drawn from a governed vocabulary, and an object. A VSC *attests*; it never establishes representation, authority, membership, admission or a governed status, whatever its predicate says. The constraints on each predicate are fixed by a predicate profile rather than by a credential type; the [[ref: VEC]] and the [[ref: VWC]] are the two profiles defined by the [[ref: DTG Credentials Specification]]. A verifier rejects a VSC whose predicate it has not been configured to accept.
+
+[[def: VTA, verifiable trust agent, VTAs, verifiable trust agents]]
+
+~ A [digital agent](https://glossary.trustoverip.org/#term:digital-agent) that represents a [[ref: DTG node]]. The network endpoint for a VTA is discoverable via the [[ref: DTG verifiable identifier]] (VID) for the entity it represents. A VTA may represent a person, device, AI agent, or [[ref: VTC]]. A VTA may be either a [[ref: local VTA]] or a [[ref: cloud VTA]]. Note: to control [correlation privacy](https://glossary.trustoverip.org/#term:correlation-privacy), individuals may have multiple VIDs and [[ref: VTA network endpoints]] all controlled by the same underlying VTA or [[ref: VTA network]].
+
+[[def: VTC, verifiable trust community, VTCs, verifiable trust communities]]
+
+~ A [trust community](https://glossary.trustoverip.org/#term:trust-community) identified with a [verifiable identifier](https://glossary.trustoverip.org/#term:verifiable-identifier) (VID) that serves as a [[ref: DTG node]]. A VTC does not identify a person, agent, or device; rather it identifies a logical entity that has persons, devices, AI agents, and/or other VTCs as members. A VTC is represented digitally by a [[ref: VTA]]—usually (but not always) a [[ref: cloud VTA]].
+
+~ A VTC may be created for any size or purpose, from a family to a social group to an open source project to a company to a nation state. The verifiable identifier for a VTC can only truthfully be declared with a `public` [[ref: correlation scope]]: a community that cannot be found cannot be joined. Membership in a VTC is defined by a pair of [[ref: VMCs]], one issued in each direction. A [[ref: VTC member]] may be invited to join using a [[ref: VTC invitation credential]].
+
+~ VTCs can be nested, in which case they form a [hierarchy](https://en.wikipedia.org/wiki/Hierarchy). However since a VTC can be a member of any number of other VTCs, VTCs can also be connected in a [heterarchy](https://en.wikipedia.org/wiki/Heterarchy).
+
+[[def: VTN, verifiable trust network, VTNs, verifiable trust networks]]
+
+~ A [trust network](https://glossary.trustoverip.org/#term:trust-network) whose members are a set of [[ref: VTCs]]. A VTN is defined by a [governance framework](https://glossary.trustoverip.org/#term:governance-framework) that determines the set of [[ref: VTN trust anchors]]. The VTC trust anchors for a VTN are typically discoverable and verifiable via a [trust registry](https://glossary.trustoverip.org/#term:trust-registry) or a trust registry network.
+
+~ A [[ref: DTG]] may support any number of VTNs. VTNs may also be nested [hierarchically](https://en.wikipedia.org/wiki/Hierarchy) or interconnected [heterarchically](https://en.wikipedia.org/wiki/Heterarchy).
+
+~ A VTN may be designed to accomplish any set of [trust objectives](https://glossary.trustoverip.org/#term:trust-objective). For example, a VTN designed for governance of [[ref: PHCs]] can meet the requirements described in the [Personhood Credentials paper](https://arxiv.org/abs/2408.07892). The [First Person Network](https://www.firstperson.network/) is an example of this type of VTN.
+
+[[def: VTSP, verifiable trust service provider, VTSPs, verifiable trust service providers]]
+
+~ A service provider that offers verifiable trust services on behalf of individuals, [[ref: VTCs]], or [[ref: VTNs]]. A VTSP may provision [[ref: local VTAs]], host [[ref: cloud VTAs]], operate [trust registries](https://glossary.trustoverip.org/#term:trust-registry), and handle routing of private channel messages, queuing, and notifications.
+
+[[def: VWC, verifiable witness credential, VWCs, verifiable witness credentials]]
+
+~ A [[ref: VSC]] under the `dtg:witnessed` predicate profile, by which a third party issues a verifiable assertion that it observed a DTG edge — represented by a [[ref: VRC]] or a [[ref: VMC]] — being formed. The issuer could be a person who personally witnesses the two parties exchanging VRCs, or it may be a [[ref: VTA]], such as the VTA for a [[ref: VTC]] who applies the VTC's policies for witnessing a relationship. For example: both parties provided: a) proof to the VTA that they were at the same event at the same time, and/or b) proof of biometric liveness at the time of relationship formation.
+
+[[def: VTA network, VTA networks]]
+
+~ A set of [[ref: VTAs]] used by one or more controllers to control a [[ref: DTG node]]. There are two basic types of VTA networks: [[ref: personal VTA networks]] and [[ref: community VTA networks]].
+
+[[def: VTA network endpoint, VTA network endpoints]]
+
+~ A [network address](https://glossary.trustoverip.org/#term:network-address) for communicating with a [[ref: VTA]]. The VTA network endpoint can be discovered via the [[ref: DTG verifiable identifier]] (VID) for the entity identified by the VID and represented by the VTA. Note: to control [correlation privacy](https://glossary.trustoverip.org/#term:correlation-privacy), individuals may have multiple VIDs and VTA network endpoints all controlled by the same underlying VTA or [[ref: VTA network]]. This form of herd privacy can be offered by a [[ref: VTSP]].
+
+[[def: VTC invitation credential, VTC invitation credentials]]
+
+~ A type of [[ref: DTG invitation credential]] issued by a [[ref: VTC]] or a [[ref: VTC member]] to invite a new VTC member. A VTC invitation credential is issued to the identifier the prospective new member proposes to use in that community.
+
+[[def: VTC member, VTC members]]
+
+~ A person or any other type of [[ref: DTG node]] that has accepted a [[ref: VMC]] from a [[ref: VTC]] by issuing the reverse VMC that completes the membership edge. If the new member is another VTC, it is identified using that VTC's own identifier; otherwise the new member is identified using an identifier of its choosing, at whatever [[ref: correlation scope]] it declares for that membership. A common pattern (depending on VTC governance) is for existing VTC members to invite new members by issuing them a [[ref: VTC invitation credential]].
+
+[[def: VTC trust anchor, VTC trust anchors]]
+
+~ A person or a [[ref: VTA]] that serves as a [trust anchor](https://glossary.trustoverip.org/#term:trust-anchor) for a [[ref: VTC]]. For VTCs that support community-based invitations, there are two subtypes of VTC trust anchors: [[ref: initiators]] and [[ref: CTAs]].
+
+[[def: VTN invitation credential, VTN invitation credentials]]
+
+~ A type of [[ref: DTG invitation credential]] issued by a [[ref: VTN]] or [[ref: VTN member]] to invite a new VTN member. A VTN invitation credential is issued to the identifier of the prospective new member VTC.
+
+[[def: VTN member, VTN members]]
+
+~ A [[ref: VTC]] that has accepted a [[ref: VMC]] in a [[ref: VTN]] by issuing the reverse VMC that completes the membership edge. In the VMC issued by the VTN, the VTC member is identified using its own identifier as subject; the VTC issues its acknowledgement from that same identifier. A common pattern (depending on VTN governance) is for existing VTN members to invite new members by issuing them a [[ref: VTN invitation credential]].
+
+~ VTN members are typically registered in one or more [trust registries](https://glossary.trustoverip.org/#term:trust-registry) serving the VTN.
+
+[[def: VTN trust anchor, VTN trust anchors]]
+
+~ A [[ref: VTC]] that serves as a [trust anchor](https://glossary.trustoverip.org/#term:trust-anchor) for a [[ref: VTN]].
+
+## DTG Credential Taxonomy
+
+*This section is informative.*
+
+This section shows the formal type hierarchy of the DTG Core Credential types. Every concrete type is a direct subtype of `DTGCredential`; there is no other abstract parent. The endorsement and witness credentials of Working Draft 02 are [predicate profiles](#predicate-profiles) of the [[ref: VSC]], not types. The [[ref: VRC]], [[ref: VMC]], and [[ref: VDC]] are [[ref: DTG edge credentials]] — see [Edge Credentials](#edge-credentials) for what that class requires — and that grouping is not reflected in the type hierarchy.
+
+```text
+VerifiableCredential
+└── DTGCredential
+    ├── MembershipCredential (VMC)
+    ├── RelationshipCredential (VRC)
+    ├── DelegationCredential (VDC)
+    ├── InvitationCredential (VIC)
+    ├── PersonaCredential (VPC)
+    ├── StatementCredential (VSC)
+    │     ├── profile dtg:endorses (VEC)
+    │     └── profile dtg:witnessed (VWC)
+    └── AuthorityCredential (VAC)
+```
+
+> **Note:** The [[ref: r-card]] (relationship card) that appeared in earlier drafts of this specification is a [[ref: verifiable data structure]] (VDS), not a `DTGCredential` subtype. It will be defined in the planned **DTG Verifiable Data Structures** specification (see [Related Specifications](#related-specifications)).
+
+## W3C Verifiable Credentials Version Support
+
+This section is normative.
+
+### Primary Standard: v2.0
+
+This specification is written using **W3C Verifiable Credentials Data Model v2.0** syntax. All DTG implementations MUST support v2.0 credential verification and SHOULD support v2.0 credential issuance.
+
+### Legacy System Compatibility: v1.1
+
+Many existing [[ref: identity verification providers]] (IDVPs), [trust registries](https://glossary.trustoverip.org/#term:trust-registry), and community infrastructure may only support W3C VC Data Model v1.1. To ensure broad interoperability and avoid forcing costly system migrations:
+
+- DTG implementations SHOULD accept and verify v1.1 credentials
+- Existing credential issuers MAY issue DTG-compliant credentials using v1.1 syntax
+- New implementations SHOULD prioritize v2.0 but MAY also issue v1.1 when required by ecosystem constraints
+
+> **Design Intent:** This dual-version support enables:
+>
+> - Legacy IDVPs to issue [[ref: IDVCs]] (identity verification credentials) without system upgrades
+> - Existing [[ref: VTCs]] to participate in the DTG using their current infrastructure
+> - Gradual ecosystem migration from v1.1 to v2.0 without breaking trust relationships
+
+### Property Mapping
+
+The only differences between v1.1 and v2.0 DTG credentials are:
+
+| Property | v1.1 | v2.0 |
+| ---------- | ------ | ------ |
+| **Context** | `https://www.w3.org/2018/credentials/v1` | `https://www.w3.org/ns/credentials/v2` |
+| **Issuance** | `issuanceDate` | `validFrom` |
+| **Expiration** | `expirationDate` | `validUntil` |
+
+All DTG-specific schemas (types, issuer requirements, credentialSubject structure) are identical.
+
+> **Implementation Note:** A DTG credential's `proof` is a `DataIntegrityProof` under either version (see [Base Structure](#base-structure)); a v1.1 credential additionally lists the Data Integrity context `https://w3id.org/security/data-integrity/v2`. Verifiers supporting both v1.1 and v2.0 credentials MUST be able to verify that proof under each version for every cryptosuite they accept. Issuers SHOULD use well-supported cryptosuites and include all necessary contexts.
+
+### Dual-Version Examples
+
+For readability, the examples throughout this specification reuse a single member identifier across a community's credentials. Every example declares its issuer's [[ref: correlation scope]] in `issuerScope`, and the value follows from who is issuing: a community, a witness service or another party that must be findable declares `public`; the reused member identifier declares `directed`, since it is used with the community and with other members; and the peers of a [[ref: VRC]] declare `pairwise`. A credential declares only its own issuer's scope, so the member's `directed` appears on the credentials the member issues, never on the community's grant to them — see [Correlation Scope](#correlation-scope).
+
+**v2.0 (Primary):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "MembershipCredential"],
+  "issuer": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example",
+  "issuerScope": "public",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2027-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs..."
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-01-06T10:00:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example#key-1",
+    "proofValue": "z3FXQjecWJKT..."
+  }
+}
+```
+
+**v1.1 (Legacy Compatibility):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://registry.trustoverip.org/dtg/context/v1",
+    "https://w3id.org/security/data-integrity/v2"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "MembershipCredential"],
+  "issuer": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example",
+  "issuerScope": "public",
+  "issuanceDate": "2026-01-06T10:00:00Z",
+  "expirationDate": "2027-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs..."
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-01-06T10:00:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example#key-1",
+    "proofValue": "z3FXQjecWJKT..."
+  }
+}
+```
+
+> **Note:** All examples in this specification use v2.0 syntax unless explicitly labeled otherwise. When implementing v1.1 support, use the property mappings above.
+
+## Correlation Scope
+
+This section is normative, except where a subsection is marked informative. Every DTG credential declares the **[[ref: correlation scope]]** of its issuer's identifier in the REQUIRED `issuerScope` property (see [Declaring scope](#declaring-scope) and [Base Structure](#base-structure)); the requirements of this section apply to that declaration.
+
+A [[ref: DTG verifiable identifier]] carries a declared correlation scope: the breadth over which its holder intends it to be correlated. Scope is declared by the holder, and is independent of the role the holder plays — which is established by the credentials the identifier appears in. A role may nonetheless constrain which scopes a holder can *truthfully* declare, as it does for a [[ref: VTC]]'s own identifier and for a [[ref: VWC]] witness's; a role never supplies the scope, it only rules some declarations out.
+
+| Scope | Known to | Holder's intent |
+|---|---|---|
+| `pairwise` | exactly one counterparty | correlation confined to this one relationship |
+| `directed` | a set of counterparties the holder chooses | deliberate correlation across that set and no further |
+| `public` | unbounded | correlation unbounded; ordinarily published so that it can be found |
+
+A *counterparty* here is a party to a relationship the identifier establishes or annotates. Disclosure to a party in a supporting role for that same relationship — a [[ref: VWC]] witness, an [[ref: IDVP]] performing identity proofing for a membership, or the resolution infrastructure the identifier depends on — does not by itself widen scope, though it does place the identifier beyond the holder's control; see [Privacy Considerations](#privacy-considerations).
+
+The values are **ordered**, narrowest first. Where this specification states a minimum scope for a purpose, a declaration narrower than that minimum does not satisfy it, and a verifier MUST NOT treat it as if it did; elsewhere a holder MAY declare any of the three. A verifier MUST NOT rely on an identifier's value, its DID method, or the context in which it was encountered as a substitute for a declaration.
+
+There are three values rather than four because each must answer the same question — *who may correlate this identifier?* — and answer it by the holder's own choice. `pairwise` confines correlation to one counterparty, `directed` confines it to a set the holder directs the identifier at, and `public` declines to confine it. There is deliberately no separate value for an identifier used within a community: an identifier a member uses only with the community is `pairwise`, and one the member also uses with other members is `directed`. A value bounded by the community would take its bound from a credential rather than from the holder — the conflation this section exists to remove — and would give a verifier two middle values it has no way to tell apart. What such a value appeared to capture is a property of the community rather than of the identifier; see [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone).
+
+### Roles are conferred by credentials
+
+An identifier is not "a membership identifier"; it is an identifier that *has* a [[ref: VMC]]. It is not "a persona identifier"; it is one that *has* a [[ref: VPC]]. Membership is still established by the VMC pair and a [[ref: persona]] is still asserted by a VPC; a scope declaration is orthogonal to both.
+
+The R-DID (relationship), M-DID (membership), C-DID (community) and P-DID (persona) identifier types used in drafts before WD02 are retired. Each named a role and a correlation width in one token, and the two can disagree — an identifier holding a VMC and issuing a VRC answered to two of the four names at once.
+
+### Choosing a scope
+
+*This subsection is informative.*
+
+Because scope is the holder's choice, it is a choice a person can be asked to make — at the moment of joining a community, and again for each relationship. Three values are few enough to put in front of a human being:
+
+1. **`pairwise` — a single-counterparty pseudonym.** Known to this counterparty and to no other, and not necessarily short-lived: a `pairwise` identifier toward a [[ref: VTC]] lasts as long as the membership. Where the counterparty is a VTC, that means known to the [[ref: VTA]] and not to fellow members.
+2. **`directed` — a private persona.** Known to this counterparty and to whoever else the holder chooses, which may include other members of the same community, or parties in other communities. This is the identifier under which a [[ref: persona]] is ordinarily asserted.
+3. **`public` — a public persona.** Known to anyone.
+
+The three values also determine when proving *intentional* correlation costs anything. Where a holder deliberately uses one `directed` or `public` identifier across several credentials, the correlation is evident on the face of them and needs no proof. A zero-knowledge proof of common control is needed only in the opposite case: where the holder has used `pairwise` identifiers, which are distinct by definition, or distinct `directed` or `public` identifiers, and wishes to demonstrate that a single party controls them all.
+
+### Scope the holder cannot declare alone
+
+A declared scope binds its holder's own disclosure. It does not bind what a counterparty does with the identifier once disclosed, and for one counterparty — a community — that gap is wide enough to require governance.
+
+A member may declare the identifier they use with a [[ref: VTC]] `pairwise`, but that declaration stays truthful only if the VTC keeps it so. A VTC that publishes a member directory, or that presents a member-issued [[ref: VMC]] to a third party as [Privacy Considerations](#privacy-considerations) permits, has widened the identifier's exposure without the member having chosen it.
+
+A VTC that issues VMCs MUST therefore publish, in its governance framework or its trust registry, whether member identifiers are disclosed beyond the [[ref: VTA]] and to whom. A verifier MUST NOT infer from a member's `pairwise` declaration that the community treats the identifier as such, and a VTA SHOULD make the community's answer available to a prospective member before that member chooses a scope for joining.
+
+This is the general case of a fact that holds for any [[ref: DTG edge]] whose two halves are held by different parties: a declaration constrains its own holder, and the disclosure an identifier actually experiences is the widest of the places either party puts it.
+
+**Consequence for relationships inside a community.** Where a member uses one `pairwise` identifier with the VTC and a second `pairwise` identifier with another member, the two differ by construction, and a [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof) must then establish common control across them rather than reading a single identifier out of both credentials. Members who expect to prove community-anchored relationships will in practice declare `directed` for intra-community use — the VTA together with the members they connect to — which is an accurate description of what that identifier is for.
+
+### Declaring scope
+
+A declaration is only meaningful if a verifier can read it. Two placements were considered, and only one is available:
+
+1. **In the credential, by the party whose identifier it is.** Each credential declares the scope of its *issuer's* identifier — the one party in a position to speak for it. Bidirectional [[ref: DTG edges]] make this complete on their own: in a [[ref: VMC]] pair the community declares its own scope in the grant and the member declares theirs in the acknowledgement, so both halves of the edge carry a first-party declaration.
+2. **In the DID document**, resolved with the identifier. This is not available where it is most needed. A `did:key` document, and a `did:peer` numalgo-0 document, are derived from the identifier value — there is no document to add a property to — and those are the methods [DID Method Considerations](#did-method-considerations) recommends for `pairwise` and `directed` identifiers. Encoding scope into the identifier value itself would place the declaration where this section forbids a verifier from reading one, and resolving a document to learn the scope has the observability cost that [Privacy Considerations](#privacy-considerations) records for the resolution layer.
+
+The declaration is therefore carried in the credential, as the top-level `issuerScope` property that [Base Structure](#base-structure) defines: exactly one of `pairwise`, `directed` or `public`, declaring the scope of the identifier in `issuer`. Two consequences follow:
+
+- A declaration is a property of the identifier, not of a credential. All credentials issued under one identifier MUST declare the same scope; a contradiction between two of them falsifies the declaration, on the same footing as reuse of a `pairwise` identifier.
+- A first-party declaration covers only an issuer's own identifier. A credential MUST NOT restate the scope of any other identifier it names, including its subject's or, in a bidirectional edge, its counterparty's; a verifier that needs the counterparty's scope reads it from a credential the counterparty issued, or does without. In a bidirectional [[ref: DTG edge]] the reciprocal credential supplies the other half, but until that half exists — a membership grant not yet acknowledged — the subject's scope is undeclared, and for [[ref: VPCs]], [[ref: VICs]] and [[ref: VSCs]] no credential declares the subject's scope at all.
+
+## Base Structure
+
+This section is normative.
+
+All DTG credentials share this W3C VC structure (v2.0 shown; see [Legacy System Compatibility](#legacy-system-compatibility-v11) for v1.1 compatibility):
+
+**Schema:**
+
+- `@context` (array, REQUIRED): MUST list `"https://www.w3.org/ns/credentials/v2"` first and `"https://registry.trustoverip.org/dtg/context/v1"` second, followed by any contexts a proof type, a predicate profile or a community vocabulary requires. The DTG context IRI is compared as an exact string, in exactly those bytes: scheme `https`, host `registry.trustoverip.org` with no `www.`, no trailing slash. See [Context Versions](#context-versions) below
+- `type` (array, REQUIRED): MUST include `"VerifiableCredential"`, `"DTGCredential"`, and exactly one concrete subtype
+- `issuer` (string, REQUIRED): DID of the issuing entity. Its [[ref: correlation scope]] is declared in `issuerScope` rather than encoded in the identifier — see [Correlation Scope](#correlation-scope)
+- `issuerScope` (string, REQUIRED): the [[ref: correlation scope]] its holder declares for the identifier in `issuer`, exactly one of `pairwise`, `directed` or `public`, compared case-sensitively. A credential declares only its own issuer's scope, never that of its subject or counterparty ([Declaring scope](#declaring-scope)). A verifier MUST reject a credential whose `issuerScope` is absent or is not one of the three values. The context defines `issuerScope` as a plain string; the constraint on its value is this specification's, and the schema of every concrete type carries it
+- `validFrom` (string, REQUIRED): ISO 8601 datetime (`issuanceDate` in v1.1)
+- `validUntil` (string, OPTIONAL): ISO 8601 datetime (`expirationDate` in v1.1)
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the subject
+  - Additional type-specific properties
+- `taskContext` (string, OPTIONAL unless a credential type or profile requires it): the `id` of the document that initiated the innermost [trust task](https://glossary.trustoverip.org/#term:trust-tasks) exchange attesting what this credential states. See [Trust Task Context Binding](#trust-task-context-binding).
+- `taskDigestMultibase` (string, REQUIRED wherever `taskContext` is REQUIRED, OPTIONAL otherwise): the task digest of the document `taskContext` names. `taskContext` locates the exchange; `taskDigestMultibase` binds the credential to it. See [The `taskDigestMultibase` Property](#the-taskdigestmultibase-property).
+- `proof` (object, REQUIRED): a [W3C Data Integrity](https://www.w3.org/TR/vc-data-integrity/) proof. `proof.type` MUST be `DataIntegrityProof`, with the cryptographic suite named in `proof.cryptosuite`, so that changing suite changes a value rather than the schema. The RECOMMENDED suite is [`eddsa-jcs-2022`](https://www.w3.org/TR/vc-di-eddsa/): its JSON Canonicalization Scheme ([RFC 8785](https://datatracker.ietf.org/doc/html/rfc8785)) transformation needs no `@context` resolution at verification time, so a credential stays verifiable offline — including one formed in person and synchronized later — and it is the canonicalization this specification already uses for digests ([Digest Encoding](#digest-encoding)). A governing [[ref: VTC]] or [[ref: VTN]] MAY require another registered suite. Selective-disclosure and zero-knowledge presentation mechanisms are not carried by this property; see [Zero-Knowledge and Selective Disclosure](#zero-knowledge-and-selective-disclosure)
+
+**Example:**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "MembershipCredential"],
+  "issuer": "did:example:vtcCommunityDid",
+  "issuerScope": "public",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2027-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:example:memberMdid"
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "created": "2026-01-06T10:00:00Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:example:vtcCommunityDid#key-1",
+    "proofValue": "z3FXQjecWJKT..."
+  }
+}
+```
+
+### Context Versions
+
+The credential context is published by the [DTG VSC Predicate Registry](#related-specifications) as one frozen document per version. `https://registry.trustoverip.org/dtg/context/v1` is the version this Working Draft requires. Once published, a context version is never edited, not even editorially, and every version ever published stays served at its IRI; a change to what credentials carry — a term added, renamed or retyped, including an additional member of a predicate profile such as `witnessContext` — is a new version, listed in a new revision of this section. Every term the context defines is `@protected`, and every type and property IRI it defines is minted under the unversioned `https://registry.trustoverip.org/dtg/credentials#`, so a term keeps its IRI across context versions.
+
+The `v1` document is byte-frozen. Its SHA-256 digest, as a Multihash encoded in Multibase base-58-btc as [Digest Encoding](#digest-encoding) specifies, is `zQmSWyCagdx8oPfXn3piSUx6yqVy5MZ7ZG7nW1TC64QvKZh` (hexadecimal `3e1376acf401016a0162c1cdb31e44a85a7dd56749caed94a1dc0a0be6cbb448`). Verifiers SHOULD use a local copy of the context matching this digest and SHOULD NOT dereference the IRI at verification time; the RECOMMENDED proof suite needs no context resolution to verify a credential, and a copy checked once against the digest is a copy that cannot change underneath a verifier.
+
+The order of `@context` matters. Every term the DTG context defines is protected, including generic names — `predicate` and `object` at the top level, and `scope`, `parent`, `event` and `method` inside the objects that define them — and JSON-LD rejects a document in which a later context redefines a protected term at the level where it is protected. A proof suite, predicate profile or community context listed after the DTG context therefore MUST NOT redefine a term the DTG context defines at the same level; a profile or community that needs a term of its own chooses a name the DTG context does not define, or scopes it under a property the DTG context does not define.
+
+Credentials issued before the Implementers Draft of this specification are not conformant to it, whatever context IRI they list. Contexts published before `v1` under other IRIs are not recognized, and a verifier is not required to process a credential that lists one.
+
+### DID Method Considerations
+
+*This subsection is informative.*
+
+This specification does not mandate a [decentralized identifier](https://glossary.trustoverip.org/#term:decentralized-identifier) method. What a method must supply depends on what the identifier is required to do — chiefly how long it must remain verifiable and how widely its holder intends it to be correlated (its [[ref: correlation scope]]) — and a deployment may use different methods for different purposes. What follows states those properties in terms of the identifier's job, so implementers can judge whether a candidate method is suitable for any identifier in a deployment, including ones this specification does not otherwise name.
+
+**Durable identifiers.** A [[ref: VTC]]'s identifier — declared `public` — issues [[ref: VMCs]] and is expected to outlive any particular key, operator, or hosting arrangement, and a member's identifier must stay verifiable across the lifetime of that membership. The determining property is how long the identifier must remain verifiable: a [[ref: VTA]] issuing [[ref: VWCs]] on behalf of a VTC, which the [`dtg:witnessed` profile](#the-dtgwitnessed-profile-vwc) permits in place of the member's own identifier, must be verifiable for as long as the attestations it issued are relied upon, and so belongs here too. A method used for these purposes should provide:
+
+- **Verifiable key history**, so that a verifier can establish which key was authoritative when a credential was signed rather than only which key is authoritative now. This matters because a DTG credential may be presented long after issuance, and [Security Considerations](#security-considerations) requires verifiers to validate the verification method.
+- **Key rotation without changing the identifier**, so that an edge of the graph survives key compromise. An identifier that cannot rotate makes every credential issued under it unrecoverable on compromise.
+- **Pre-rotation or an equivalent commitment to successor keys**, limiting what an attacker holding a current key can do.
+- **Independence from a single operator or hosting location**, so that loss of a domain does not sever the identifier from the graph built on it.
+- **Discoverable service endpoints**, since the [[ref: VTA]] endpoints, `credentialStatus` mechanism, and [trust registry](https://glossary.trustoverip.org/#term:trust-registry) references relied on elsewhere in this specification are resolved through them.
+
+Methods that publish a verifiable, append-only history of DID document versions — such as [did:webvh](https://identity.foundation/didwebvh/v1.0/), whose log entries commit to successor keys and may be countersigned by *DID log witnesses* — satisfy the first three properties. A DID log witness countersigns versions of a DID document and is a distinct role from the witness of a [[ref: VWC]], which attests to an edge; the two share only a name, and this subsection uses the qualified term wherever the DID log sense is meant.
+
+Independence from a hosting location needs to be confirmed separately, because some methods make it a decision that can only be taken when the identifier is created. A `did:webvh` identifier resolves its log at a web origin and can be relocated only where the `portable` parameter was set in the first log entry; it defaults to off, and a later entry cannot enable it. Methods that separate the identifier from the location of its verification metadata — such as `did:scid`, under development at [ToIP](https://lf-toip.atlassian.net/wiki/spaces/HOME/pages/88572360/DID+SCID+Method+Specification), whose identifier is a self-certifying value that carries no location — do not present this choice at all. Implementers selecting a method for an identifier expected to outlive its current hosting arrangement should confirm both that the method supports relocation and that any capability which must be enabled at inception has been.
+
+Methods that resolve to a document with no verifiable history, such as `did:web`, satisfy rotation and endpoint discovery but provide neither verifiable history nor any commitment to successor keys. Such a document is rotated by republishing it, which leaves a verifier unable to distinguish a legitimate rotation from a key substituted by an attacker, and unable to establish which key was authoritative at issuance.
+
+**Narrow-scope identifiers (`pairwise` and `directed`).** A `pairwise` identifier is known to one counterparty; a `directed` identifier — a [[ref: persona]], for instance — is known to a set the holder chooses. Both exist to limit correlation, and both are expected to be created in quantity. A method used for these should provide:
+
+- **Cheap creation with no registration step**, since a deployment may mint one identifier per relationship or per persona.
+- **No shared resolution origin**, so that resolving one identifier does not reveal the existence of, or a common controller for, the others. See [Privacy Considerations](#privacy-considerations).
+- **No dependency on infrastructure that observes identifier use**, since a party that resolves, or acts as a DID log witness for, many of a person's pairwise identifiers is positioned to correlate them regardless of the identifiers themselves.
+
+Peer and key-based methods such as `did:peer` and `did:key` satisfy these properties. A method requiring each identifier to be published at a web origin is a poor fit for these roles even where it is the right choice for a `public` identifier, because the origin is common to every identifier published under it.
+
+**Durability and scope are chosen independently.** The two groups above are not two ends of one dial, and an implementation that reads "narrow scope" as a synonym for "disposable" will get this wrong. An identifier a member uses only with their community is `pairwise`, and it must nevertheless remain verifiable for as long as the membership does — so it needs verifiable key history and rotation while still avoiding a shared resolution origin. Durability follows the lifetime of the credentials issued under an identifier; [[ref: correlation scope]] follows the holder's disclosure choice. A method has to be judged against both.
+
+**Mixing methods.** Because the properties above pull in opposite directions — durability and recoverability against disposability and non-correlation — implementations should expect to use more than one method, rather than seeking a single method that serves every role. Nothing in this specification requires the `issuer` and `credentialSubject.id` of a credential to use the same method, and the examples throughout reflect this: durable issuers are shown with `did:webvh` and member and peer subjects with `did:key` or `did:peer`.
+### Digest Encoding
+
+Four credential types reference another credential by cryptographic digest rather than by identifier: the member-issued [[ref: VMC]]'s `digestMultibase` (the grant it acknowledges), a [[ref: VSC]]'s `object.digestMultibase` (the credential a statement is about — for a [[ref: VWC]], the edge credential it witnesses), the [[ref: VDC]]'s `delegation.parent` and `delegation.accepts` (the delegation it derives from, or the grant it accepts), and the [[ref: VAC]]'s `authority.parent` (the VAC it was attenuated from). A credential citing a trust task carries a sixth, `taskDigestMultibase`, which references a Trust Task document rather than a credential: the initiating document of the exchange its `taskContext` names (see [The `taskDigestMultibase` Property](#the-taskdigestmultibase-property)). All six members MUST be encoded identically, as specified here. The property name `digestMultibase` is the one [VC Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/) defines for a value of this form; `parent` and `accepts` carry the same encoding under names that state their role.
+
+These references are digests rather than identifiers for two different reasons, and it is worth keeping them apart. Three of them — the acknowledgement's `digestMultibase`, the acceptance's `accepts`, and a statement's `object.digestMultibase` — are statements *about the exact content* of the credential they name: the member consents to that grant, the delegate to that appointment, the statement's issuer attests to that credential (a witness, to the edge it observed), and a verifier re-derives nothing from the referenced credential but takes it as what was consented to or attested. An identifier would not do here, because the referenced credential could be re-issued with different claims under the same identifier and carry the consent or attestation with it. The two chain references — a VDC's and a VAC's `parent` — do not need the digest to keep a chain from widening: a verifier re-checks every link against the parent it is presented, so a substituted parent could never confer more than the chain's root did. They take the same form so that every cross-credential reference in this specification is produced and matched in one way, so that a reference never names anything a verifier could be induced to fetch, and so that no credential has to carry a top-level `id` merely in order to be referenced. But the digest is doing more than uniformity here, and withdrawal is where it becomes load-bearing: it is what binds a child to the exact parent it was derived from, so that a child cannot be re-parented onto a later issue of that parent. This is what makes the cascade of [Withdrawal](#withdrawal) hold without a register — an issuer that revoked a VAC and re-issued it under the same `id` would, under an identifier reference, silently revive every attenuation beneath it. The cost of the same property is that a re-issued parent does not carry its existing children with it; each must be re-derived, which for a chain of narrowing authority or representation is the intended behaviour.
+
+A digest value MUST be produced as follows:
+
+1. Take the referenced credential's JSON representation **excluding its top-level `proof` member**, and canonicalize it with the JSON Canonicalization Scheme ([JCS, RFC 8785](https://datatracker.ietf.org/doc/html/rfc8785)). Excluding the proof means a digest binds to the credential's claims rather than to one signature over them, so a re-proofed credential carrying identical claims still satisfies an existing reference.
+2. Compute the SHA-256 hash of the resulting UTF-8 bytes.
+3. Form a Multihash value by prefixing the digest with the `sha2-256` algorithm header (`0x12`) and the digest length in bytes (`0x20`), each encoded as a varint, per [CID v1.0 §2.5](https://www.w3.org/TR/cid-1.0/#multihash).
+4. Encode the resulting 34 bytes with the base-58-btc alphabet and prefix the Multibase header `z`, per [CID v1.0 §2.4](https://www.w3.org/TR/cid-1.0/#multibase-0).
+
+This is the encoding defined for the `digestMultibase` property in [VC Data Integrity §2.6](https://www.w3.org/TR/vc-data-integrity/#resource-integrity). For `taskDigestMultibase` the input to step 1 is the cited Trust Task document instead of a credential, and the four steps are then the task digest the Trust Tasks specification defines in [Binding a Citation to the Document It Names](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#binding-a-citation-to-the-document-it-names). That specification recommends SHA-256 and admits any Multibase alphabet; an issuer of a DTG credential uses SHA-256 and base-58-btc, as for the other five members, so that `taskDigestMultibase` has the same single canonical form. A digest of the empty string, for example, is expressed as:
+
+```
+zQmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n
+```
+
+Issuers MUST use base-58-btc so that a single canonical form exists for any given digest. Verifiers MUST NOT rely on string comparison to determine whether two digest values refer to the same credential: a conforming verifier decodes the Multibase value, decodes the Multihash to recover the algorithm identifier and the raw digest, and compares those. This requirement applies wherever the specification calls for digest values to match — notably when an acceptance VDC's `accepts` is matched against a grant, when a derived VDC's `parent` is matched against the credential it derives from (see [Delegation Chains](#delegation-chains)), when an attenuated VAC's `parent` is matched against the VAC it was attenuated from (see [Attenuation](#attenuation)), and when `taskDigestMultibase` is matched against the document `taskContext` names (see [Outcome Interpretability](#outcome-interpretability)).
+
+Where a governing [[ref: VTC]] or [[ref: VTN]] requires a stronger hash, it MAY permit additional Multihash algorithm identifiers registered in [CID v1.0 §2.5](https://www.w3.org/TR/cid-1.0/#multihash). Because the algorithm is carried in the value itself, such a change does not alter the format of the property. Verifiers MUST reject a digest whose Multihash identifies an algorithm they do not accept, rather than treating it as a mismatch.
+
+> **Editor's note:** A digest over low-entropy content can be reversed by enumeration where the referenced credential is not disclosed, because an observer who knows the schema and the governing vocabulary can try the plausible values. None of the digest-valued members above is salted in this version. The `predicate` of a [[ref: VSC]] is a blinding target for the same reason: a term drawn from a small vocabulary is enumerable. Blinding them is cross-cutting work with the ZKP task force; this section fixes the encoding so that a blinding scheme can later change what is hashed without a second encoding migration.
+
+## Edge Credentials
+
+This section is normative.
+
+Edge credentials establish relationships between existing entities (nodes) in the DTG: [[ref: VRCs]] attest to relationships between two entities, [[ref: VMCs]] attest to community membership, and [[ref: VDCs]] attest that one entity has appointed another to act in its name. In each case, a bi-directional pair of credentials forms a complete [[ref: DTG edge]].
+
+What makes a credential an edge credential is that it is one half of such a pair: the relationship it attests to is only established when the counterparty issues the other half. Every other credential in this specification is complete on its issuer's signature alone. The requirements of this section apply to the class — a pair is required, and [Edge Verifiability](#edge-verifiability) determines when a verifier treats a pair as an edge of a particular graph — and a statement that would need the counterparty's agreement to be true is an edge credential, not a [[ref: VSC]] predicate profile (see [Statements and Establishment](#statements-and-establishment)).
+
+### VRC (Verifiable Relationship Credential)
+
+**Purpose:** Attests to a relationship between two entities; two VRCs (one each direction) form a complete [[ref: DTG edge]].
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"RelationshipCredential"`
+- `issuer` (string, REQUIRED): DID of the source party
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure). This specification places no constraint on the value, which is the source party's own declaration; `pairwise` is RECOMMENDED (see the note below)
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the target party as used in this relationship
+
+**Example:**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "RelationshipCredential"],
+  "issuer": "did:peer:2.Ez6LSbysKZ...",
+  "issuerScope": "pairwise",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:peer:2.Ez6LSpSrLxn..."
+  },
+  "proof": { "//": "..." }
+}
+```
+
+**Note:** a `pairwise` [[ref: correlation scope]] is RECOMMENDED for privacy. A wider declaration is permitted — `directed`, for a relationship the holder intends to be correlated with others they choose, including relationships inside a shared [[ref: VTC]] — but it is a disclosure the holder makes deliberately (see [Choosing a scope](#choosing-a-scope) and [Privacy Considerations](#privacy-considerations)).
+
+#### Unilateral Relationship Identification
+
+An identifier generated by a controller for the explicit purpose of establishing a VRC, and declared `pairwise`, serves as a globally unique identifier for that relationship edge from the perspective of the controller.
+
+Therefore, a relationship within the DTG can be canonically identified by two independent identifiers:
+
+- The source identifier (controlled by the Issuer)
+- The target identifier (controlled by the Subject)
+
+Semantic statements, metadata, or private context regarding the relationship MAY be anchored solely to the controller's own identifier, without requiring the resolution or inclusion of the counterparty's identifier.
+
+An identifier declared `pairwise` MUST NOT be used with more than one counterparty. A verifier that observes a `pairwise` identifier with a second counterparty MUST treat the declaration as false and MUST NOT rely on it. Implementations SHOULD default to minting a distinct identifier for each new relationship.
+
+#### Pairwise Zero-Knowledge Proof
+
+The holder of a VRC MAY construct a zero-knowledge proof that demonstrates possession of a valid VRC and selectively discloses chosen attributes, subject DIDs, or predicates over them. A common application is to disclose the parties' `directed` persona identifiers while hiding the underlying `pairwise` ones, enabling a public, verifiable claim that two known [[ref: personas]] have a relationship without exposing the private pairwise channel between them or enabling correlation across the holder's other presentations. This construction is available to any two parties who hold a VRC between them, regardless of whether they share membership in a [[ref: VTC]]. It supports selective disclosure and minimal correlation across contexts. It does not by itself confer any community-level assurance (e.g., personhood); whatever assurance it carries derives from the parties' own out-of-band context, the public reputation attached to any disclosed persona DIDs, and the cryptographic integrity of the VRC.
+
+### VMC (Verifiable Membership Credential)
+
+**Purpose:** Attests to the membership of an entity in a [[ref: VTC]] or [[ref: VTN]]; two VMCs (one each direction) form a complete [[ref: DTG edge]].
+
+> **Editor's note — membership requires something that has members.** This specification now records that the [[ref: DTG node]] types are illustrative rather than closed, which invites the question of whether a VMC may bind to any of them. It may not, and the constraint is worth stating before the question is asked in a form that assumes otherwise: **a VMC binds a member to a node that *has members*.** A [[ref: VTC]] has members. A [[ref: VTN]] has members. A service has registered clients, and a device has authorized identities — both are collectives, whatever else they are.
+>
+> A **person is not a collective**, and a VMC MUST NOT be read as attesting membership *in* one. That relationship already has two credentials that fit it: a [[ref: VRC]] where the parties are peers, and a [[ref: VDC]] where one acts in the other's name. Reading membership onto a person would re-collapse a distinction the catalog spends effort keeping — the same collapse the [Authority](#vac-verifiable-authority-credential) section describes between asserting something about a party and conferring something on them.
+>
+> This note states a **constraint**, not a broadening: it does not extend what a VMC may bind to beyond the VTC and VTN the schema below names. It records the boundary that any future broadening should respect, so that the question the node-type change raises has a bounded answer rather than an open one.
+
+**Schema:**
+
+A VMC is issued in each direction of a membership edge. The two directions are distinguished by the issuer and subject rules below together with the presence of `digestMultibase`, not by separate type strings. Where both endpoints are communities, as in VTN membership, the issuer and subject rules do not distinguish the directions and `digestMultibase` is the discriminator: a VMC carrying it is a member-issued acknowledgement, and a VMC without it is a community-issued grant.
+
+- `type` (array, REQUIRED): MUST include `"MembershipCredential"`
+- `issuer` (string, REQUIRED):
+  - For the community-issued VMC (the membership grant): DID of the VTC or VTN
+  - For the member-issued VMC (the membership acknowledgement): DID of the member — the same identifier the grant names as its subject
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure):
+  - For the community-issued VMC: `public` — the only scope a community can truthfully declare (see below)
+  - For the member-issued VMC: whatever the member declared for the identifier the grant names
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED):
+    - For the community-issued VMC: DID of the member (a person, device, agent, service, or, for VTN-to-VTC membership, a member VTC)
+    - For the member-issued VMC: DID of the VTC or VTN
+  - `digestMultibase` (string, REQUIRED on the member-issued VMC, MUST be omitted on the community-issued VMC): A cryptographic hash of the community-issued VMC being acknowledged, computed over the credential excluding its top-level `proof` member and encoded as specified in [Digest Encoding](#digest-encoding).
+
+A community's own identifier can only truthfully be declared `public`: a community that cannot be found cannot be joined. The member's identifier carries whatever [[ref: correlation scope]] the member declared for it, and this specification does not constrain that choice — see [Choosing a scope](#choosing-a-scope) and [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone).
+
+**Example (community-issued VMC — membership grant):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "MembershipCredential"],
+  "issuer": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example",
+  "issuerScope": "public",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs..."
+  },
+  "proof": { "//": "..." }
+}
+```
+
+**Example (member-issued VMC — membership acknowledgement):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "MembershipCredential"],
+  "issuer": "did:key:z6MkpTHR8VNs...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:05:00Z",
+  "credentialSubject": {
+    "id": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example",
+    "digestMultibase": "zQmZ3zhk4n6yVDrJwbo4FX5ou27L2tgNnuFRxYrQrGQfUUN"
+  },
+  "proof": { "//": "..." }
+}
+```
+
+#### Membership Edge Completion
+
+A membership edge is complete only when both VMCs of the pair exist and are valid: the community-issued VMC that grants membership, and the member-issued VMC that acknowledges it.
+
+The community-issued VMC MUST be issued first, and the member-issued VMC MUST carry a `digestMultibase` of it. A member-issued VMC whose `digestMultibase` does not match a valid community-issued VMC MUST NOT be treated as completing a membership edge.
+
+Because the `digestMultibase` is computed over the credential's claims and not over its `proof`, an acknowledgement survives a re-proofing of the community-issued VMC it references: a re-signed grant carrying identical claims satisfies an existing acknowledgement. The member's consent binds to the membership granted, not to a particular signature over it.
+
+Where the subject of a community-issued VMC demonstrates possession of that credential as evidence of its own membership, together with proof of control of the subject DID, a verifier MAY accept it alone. The demonstration is itself the member's participation, and it is available only to a party holding the subject's key — which is precisely what a community asserting someone's membership does not have. This holds whether the demonstration is a direct presentation or a possession statement carried inside a zero-knowledge proof. These are the cases that the [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof) and [Personhood Credentials](#personhood-credentials-phc) rely on.
+
+Where a [[ref: VTC]], [[ref: VTN]], or any party other than the member asserts that an entity is a member, the verifier MUST require the member-issued VMC. A community-issued VMC alone MUST NOT be accepted as evidence that the named entity is a member. A community asserting an entity's membership MUST be able to produce the member-issued VMC that completes the edge. The third statement of a [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof) is a claim of this kind; that section states what a verifier may conclude from it.
+
+The member-issued VMC is the member's consent artifact, and this is why the pair is required rather than a single directed credential. A community can always issue a credential naming someone as a member, but it cannot produce the acknowledgement without that party's signature. Requiring the acknowledgement therefore makes unconsented membership claims unprovable — and a community that cannot show one is visibly asserting a membership that was never agreed to.
+
+> **Editor's note — membership lifecycle:** Withdrawal, revocation, and re-issuance of either VMC, and the protocol by which the pair is exchanged, are deferred to the planned DTG Core Trust Task Protocols specification (see [Related Specifications](#related-specifications)). Because the member is the issuer of the member-issued VMC, withdrawal of consent is self-sovereign and requires no cooperation from the community. The open question left to that specification is where a verifier discovers the status of a member-issued VMC, which must be under the member's control rather than the community's trust registry, so that a member never depends on the community to invalidate their own credential. Until that mechanism exists, a verifier can confirm that an acknowledgement matches its grant but cannot learn that it has since been withdrawn. Two interim controls follow from `digestMultibase` binding the acknowledgement to the grant's claims: a short `validUntil` on the community-issued VMC forces periodic re-acknowledgement, because a re-issued grant carries different claims and therefore a different digest that the earlier acknowledgement no longer matches; and a short `validUntil` on the member-issued VMC bounds how long the community holds a presentable proof of the member's consent (see [Privacy Considerations](#privacy-considerations)).
+
+#### Community-Anchored Zero-Knowledge Proof
+
+A VRC is a signed verifiable credential. It MAY be presented and verified using standard W3C VC presentation methods when privacy preservation is not required, and it SHOULD be presented using a zero-knowledge proof whenever privacy preservation is desired. Community membership is **not** a precondition for issuing, holding, or presenting a VRC; two entities that do not share (or do not hold) a [[ref: VMC]] can still exchange VRCs, and the resulting edges are valid trust attestations standing on their cryptographic signatures and on whatever real-world context the parties bring to them.
+
+When both parties to a VRC hold VMCs from the same community, the holder MAY construct a community-anchored ZKP of the relationship. In such a proof, the holder demonstrates:
+
+1. Possession of the VRC
+2. Possession of the underlying community-issued VMC (proving membership in the community)
+3. The VRC issuer possesses a community-issued VMC from the *same* community identifier
+
+Statement 2 is a demonstration by the holder of a credential whose subject is the holder, and is the case the presentation rule in [Membership Edge Completion](#membership-edge-completion) covers. Statement 3 is not: it rests on a community-issued VMC whose subject is the VRC issuer rather than the holder, and under that rule a community-issued VMC alone does not establish that its subject is a member. The evidence that would establish it is the VRC issuer's own member-issued VMC — the acknowledgement of the grant that statement 3 refers to — which is signed by the issuer and names the community. Whether the holder obtains that acknowledgement in the course of exchanging VRCs, and how statement 3 is then proven in zero knowledge, are deferred to the trust task and ZK protocol work respectively (see the editor's note above and [Zero-Knowledge and Selective Disclosure](#zero-knowledge-and-selective-disclosure)). Until those are specified, a verifier of a community-anchored proof SHOULD treat statement 3 as establishing that the community attested the VRC issuer's membership, and SHOULD NOT treat it as establishing that the issuer acknowledged that membership.
+
+Statements 2 and 3 concern the identifiers named in the VMCs, which need not be the identifiers the same parties used in the VRC. Where a party declared one `directed` identifier and used it both with the community and with its counterparty, a single identifier appears in both credentials and the proof reads it directly. Where a party used a `pairwise` identifier with each, the two identifiers differ by construction and the proof must additionally establish common control of them. This is the member's choice to make rather than the specification's; see [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone).
+
+This allows the relationship's existence to be proven within a shared community's governance context without revealing the specific DIDs or other credential details. Whatever assurances the community's trust registry attaches to its VMCs (e.g., personhood, when the VMCs qualify as [[ref: PHCs]]) carry forward into the proof.
+
+This is one proof construction available to relationships within a shared community. Detailed ZK protocols and registry-ZK interactions are out of scope for this specification (see [Zero-Knowledge and Selective Disclosure](#zero-knowledge-and-selective-disclosure)).
+
+**Note:** Implementations SHOULD make ZKP presentation the default behavior so that users obtain privacy preservation without having to opt in. See [Privacy Considerations](#privacy-considerations).
+
+### VDC (Verifiable Delegation Credential)
+
+**Purpose:** Attests that one entity (the delegator) has appointed another entity (the delegate) to act in the delegator's name, for a bounded set of acts, for a limited period, revocably. Within the appointed `scope`, what the delegate does is attributable to the delegator. Two VDCs — a grant and a matching acceptance — form a complete [[ref: DTG edge]].
+
+A VDC differs from every other credential in this specification in kind, not only in payload. The [[ref: VRC]], [[ref: VMC]], [[ref: VIC]], [[ref: VPC]], and [[ref: VSC]] all *attest* that something is true about the graph; a verifier evaluates each as a claim and asks whether it is true. A VDC establishes *representation*; a verifier asks a different question — whether this party may stand in for that one, for this act, at this moment — and answering it requires steps that evaluating a claim does not: scope containment, chain resolution, invocation binding, and timely revocation. That is why delegation is defined as its own concrete subtype rather than expressed through the payload of an existing type. The general form of this test is stated in [Statements and Establishment](#statements-and-establishment).
+
+#### Grant and Invocation
+
+*This subsection is informative.*
+
+Delegation divides cleanly along the test in [Credentials versus Trust Task Artifacts](#credentials-versus-trust-task-artifacts):
+
+- **The grant** — "this delegator has appointed this delegate to act in its name, for this scope, until this time" — is true standing alone and outlives the exchange in which it was issued. It is a **credential**, defined here.
+- **The invocation** — "the delegate is acting in the delegator's name, now, to do this particular thing" — is meaningful only inside the exchange in which it occurs. It is a **trust task artifact**, correlated by `threadId` and defined in the planned DTG Core Trust Task Protocols specification.
+
+This specification therefore defines what a delegation *is* and how a verifier establishes that it is valid and in force. It does not define how a delegation is exercised.
+
+#### Delegation and Authority
+
+*This subsection is informative.*
+
+Delegation and authority are distinct, and a VDC expresses only delegation. Keeping the two apart is what tells an implementer which credential to reach for.
+
+- **Authority** answers *may this party do this thing?* The party acts **as itself**. What it does is attributed to it, and it may do it because it has been permitted to.
+- **Delegation** answers *may this party act in another's name?* The delegate acts **as the delegator**. What it does within `scope` is attributed to the delegator, and is bounded by what the delegator could have done itself.
+
+| Question | Answered by | The act is attributed to |
+| ---------- | ------------- | -------------------------- |
+| May this party do this thing, as itself? | authority — the [[ref: VAC]] | the party itself |
+| May this party act in another's name? | delegation — the VDC | the entity in whose name it acts |
+
+Neither implies the other. A service granted access to a person's mailbox may read that mail as itself; it has not thereby been appointed to send mail in that person's name. Conversely, a delegate appointed to correspond in a person's name holds that appointment whether or not it has been given access to any particular mailbox — and where it has not, the appointment gets it nowhere. The first is authority without delegation; the second is delegation without authority. A credential that conflated them would leave a verifier unable to tell which of the two it had been shown.
+
+A VDC establishes delegation and nothing else. Guardianship, succession, estate administration, custodianship, and other representative authority that arises from an external mandate are conferred by whatever governed process confers them, and are not expressed by a VDC. A representative so appointed may in turn delegate, by issuing a VDC bounded by the authority it actually holds; the originating authority stays separate.
+
+**When to use a VDC.** Ask whose name the act is performed in.
+
+- **The actor's own name** — the actor is doing something it has been permitted to do, and the act is attributed to it. This is a question of authority, and a VDC is the wrong credential; the [[ref: VAC]] is the right one (see [VAC (Verifiable Authority Credential)](#vac-verifiable-authority-credential)).
+- **Another entity's name** — the actor is standing in for that entity, and the act is attributed to that entity. This is delegation, and a VDC is the credential that establishes it.
+
+An AI agent acting for a person can be equipped either way, and the same test decides which; see [Relationship to the VDC](#relationship-to-the-vdc).
+
+#### How a Delegation Composes with Authority
+
+*This subsection is informative.*
+
+A VDC neither carries authority nor confers it on the delegate. When a delegate presents a VDC and asks to perform an act, the verifier does not ask what the *delegate* is permitted to do, and it does not treat the VDC as a permission the delegator has handed over. It substitutes the delegator for the delegate and then asks the question it would have asked of the delegator directly. **A VDC moves the question; it does not answer it.**
+
+Three checks, each independent of the others:
+
+1. **Is this the delegate, and may it act in the delegator's name for this act?** Established by the VDC, together with [Delegation Chains](#delegation-chains) and [Invocation Binding](#invocation-binding). This specification defines this check.
+2. **May the delegator perform this act?** Established by whatever the act requires of the delegator — community membership, a governance framework, an [[ref: IDVC]], a [[ref: VAC]], or the verifier's own policy. This specification does not define this check, and a VDC does not influence its outcome.
+3. **Must the delegate independently qualify?** A governance determination. Some communities will require a delegate to hold a [[ref: VMC]] of its own, or to satisfy the same requirements as any other actor, before it may act for anyone; others will not.
+
+The reach of a delegation is the **intersection** of what the delegator may do and what the VDC chain appoints the delegate for — never the union, and never more than either.
+
+Three consequences follow, and they answer the question of what, exactly, has been handed over:
+
+- **Nothing the delegator holds is copied to the delegate.** A credential issued to the delegator remains the delegator's. The issuer's assurance about the delegator does not extend to the delegate, and a delegator cannot re-issue to a delegate what it was itself issued. A delegation is a statement by the delegator about who may speak in its name; it is not a transfer of anything the delegator was given.
+- **Withdrawing the delegator's own permission ends the delegate's ability to act immediately**, without revoking the VDC, because check 2 is evaluated at the time of the act rather than at the time of the appointment. Revoking the VDC and withdrawing the underlying permission are different remedies with different reach, and a delegator may need either.
+- **A `scope` may exceed what the delegator itself may do.** This is not an error: a delegator's own permissions change over the life of a durable appointment. A verifier MUST NOT treat such a `scope` as conferring anything beyond what check 2 allows, and issuers SHOULD NOT issue one as a matter of hygiene.
+
+Credentials expressing authority are defined separately: the [[ref: VAC]] is one of the things that can satisfy check 2, and a VDC never stands in for it. Confining the VDC to delegation is what lets the two coexist without either reinterpreting the other or contending with it for the same semantic ground; see [Relationship to the VDC](#relationship-to-the-vdc).
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"DelegationCredential"`
+- `issuer` (string, REQUIRED): DID of the delegator — a person, device, or agent; a [[ref: VTC]] where a community delegates to a [[ref: VTA]] or other service; or an identifier under which a [[ref: persona]] is asserted, where the delegation is made under that persona. The delegator chooses the identifier and the [[ref: correlation scope]] it declares for it; see [Privacy Considerations](#privacy-considerations) item 10
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure). A VDC is presented to every verifier the delegate acts toward, each of whom sees the delegator's identifier, so a grant's issuer can seldom truthfully declare `pairwise`; `directed` is the ordinary declaration (see [Privacy Considerations](#privacy-considerations) item 10)
+- `validUntil` (string, REQUIRED): ISO 8601 datetime (`expirationDate` in v1.1). Unlike the base structure, `validUntil` is REQUIRED for a VDC: an appointment with no expiry cannot be reasoned about by a verifier that cannot reach the delegator.
+- `credentialStatus` (object, CONDITIONAL): a W3C VC status mechanism through which a verifier can determine whether the delegation has been revoked. A verifier MUST be able to establish that an appointment is currently in force without contacting the delegator. Two things satisfy that: a `validUntil` short enough that expiry alone bounds the exposure, with the delegator withdrawing the appointment by declining to re-issue; or a `credentialStatus` the verifier can check. A VDC MUST carry `credentialStatus` where its validity period exceeds the freshness window the governing [[ref: VTC]] or [[ref: VTN]] defines for delegations, and MAY omit it otherwise. Issuers SHOULD prefer short validity and re-issuance wherever the delegator is reachable, because a status check is a live lookup that reveals the verification event to whoever hosts the status list (see [Privacy Considerations](#privacy-considerations) item 12); a long-lived appointment made in advance of a delegator's unavailability is the case `credentialStatus` exists for. The status mechanism used is determined by the governing VTC or VTN.
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the delegate
+  - `delegation` (object, REQUIRED):
+    - `scope` (array of strings, REQUIRED on a grant, MUST be omitted on an acceptance): the acts the delegate may perform in the delegator's name. MUST contain at least one entry; the vocabulary is defined by the governing VTC or VTN, as for the `endorsement` structure of a [[ref: VEC]]. A VDC MUST NOT express an unbounded appointment by omitting or emptying `scope`. Scope entries are opaque strings compared for exact equality: this specification defines no wildcard, prefix, or hierarchical semantics, so that the subset test in [Delegation Chains](#delegation-chains) is set inclusion over exact matches and a governing vocabulary that wants structure must define it in the terms themselves.
+    - `parent` (string, OPTIONAL): the digest of the VDC from which this delegation was derived, when the delegator is itself acting under a delegation, encoded as specified in [Digest Encoding](#digest-encoding). A VDC with no `parent` is a **root delegation**.
+    - `maxDepth` (integer, OPTIONAL): the number of further re-delegations permitted below this one. A value of `0` prohibits re-delegation. When absent, re-delegation is prohibited. Setting `maxDepth` above `0` is the delegator's explicit authorisation to re-delegate; there is no other.
+    - `accepts` (string, REQUIRED on an acceptance, MUST be omitted on a grant): the digest of the grant being accepted, encoded as specified in [Digest Encoding](#digest-encoding). See [Delegation Edges](#delegation-edges).
+
+**Example (grant):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "DelegationCredential"],
+  "issuer": "did:peer:2.Ez6LSbysKZ...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2026-04-06T10:00:00Z",
+  "credentialStatus": {
+    "id": "https://chess-club.example/status/3#94567",
+    "type": "BitstringStatusListEntry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "94567",
+    "statusListCredential": "https://chess-club.example/status/3"
+  },
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs...",
+    "delegation": {
+      "scope": ["schedule:read", "schedule:propose"],
+      "maxDepth": 0
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+**Example (acceptance):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "DelegationCredential"],
+  "issuer": "did:key:z6MkpTHR8VNs...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:05:00Z",
+  "validUntil": "2026-04-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:peer:2.Ez6LSbysKZ...",
+    "delegation": {
+      "accepts": "zQmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n"
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+#### Delegation Edges
+
+A VDC whose `delegation` object has no `accepts` property is a **grant**: the delegator states the appointment it has made. A VDC whose `delegation` object has an `accepts` property is an **acceptance**: the delegate acknowledges the appointment it has taken on, and thereby the accountability that attaches to acting in another's name. Together they form a complete [[ref: DTG edge]], consistent with the bidirectional pairing of [[ref: VRCs]] and [[ref: VMCs]].
+
+- In an acceptance, `issuer` MUST be the `credentialSubject.id` of the grant, and `credentialSubject.id` MUST be the `issuer` of the grant.
+- An acceptance carries no `scope` of its own. What the delegate consented to is the `scope` of the grant identified by `accepts`; a verifier reads it from the grant, which it must hold in any case. Restating the scope in the acceptance would require an equality check across the two credentials, which cannot be satisfied under selective disclosure of either.
+- The acceptance is REQUIRED. A verifier MUST obtain and verify the acceptance before accepting any party as acting under the delegation; a grant alone establishes what the delegator appointed, not what the delegate agreed to, and MUST NOT be accepted as evidence that the delegate took on the appointment. This is the same consent rule as [Membership Edge Completion](#membership-edge-completion), for the same reason: a delegator can always issue a credential naming someone as its delegate, but cannot produce the acceptance without that party's signature. It also means that a party holding only the delegate's key cannot manufacture new appointments — creating one requires the delegator to issue and the delegate to countersign.
+- The edge is directional. A delegation runs from delegator to delegate; the acceptance makes the appointment mutually acknowledged, it does not make it symmetric. Nothing in an acceptance appoints the delegator to act in the delegate's name.
+- A VDC neither requires nor implies a [[ref: VRC]] between the parties. A VRC is relationship evidence and a VDC is delegation evidence, and a verifier learns nothing about one from the other. A governing [[ref: VTC]] or [[ref: VTN]] MAY require both for a particular use.
+
+#### Delegation Chains
+
+A delegate MAY appoint a further delegate only where the VDC it holds explicitly permits this through `maxDepth`, and only for a subset of the acts it was itself appointed for. The default is a single hop: a delegate whose VDC does not permit re-delegation, and that needs a further delegate, asks the principal, who issues a fresh root delegation directly — so that the principal always holds the complete register of who may act in its name and can withdraw any of them. Re-delegation exists for the case where that round trip is unavailable, and a governing [[ref: VTC]] or [[ref: VTN]] MAY forbid it for particular acts. Where a VDC carries a `parent`, verifiers MUST evaluate the whole chain:
+
+1. Every VDC in the chain MUST independently satisfy the verification requirements of this specification, including proof verification, validity period, and revocation status.
+2. The `scope` of each VDC MUST be a subset of the `scope` of the VDC identified by its `parent`. A verifier MUST reject any chain in which a delegation broadens the appointment it derives from.
+3. The `validUntil` of each VDC MUST NOT be later than the `validUntil` of its parent.
+4. Depth is bounded by every ancestor. A VDC derived from a parent bearing `maxDepth` *n* MUST NOT itself bear a `maxDepth` greater than *n* − 1, and a verifier MUST reject a chain in which any VDC lies more than *n* steps below an ancestor bearing `maxDepth` *n*. A verifier MUST reject any re-delegation below a VDC that omits `maxDepth` or sets it to `0`.
+5. The chain MUST terminate in a root delegation whose `issuer` is the principal — the entity in whose name the acts would ultimately be performed. A verifier MUST establish that this principal is the party it intends to deal with; a chain that cannot be resolved to such a root establishes no representation. A governing [[ref: VTC]] or [[ref: VTN]] MAY additionally restrict which entities may delegate which acts, published via the applicable [trust registry](https://glossary.trustoverip.org/#term:trust-registry).
+
+As with a [[ref: VSC]]'s `object.digestMultibase`, a `parent` value is only as useful as the verifier's access to the credential it references. Holders presenting a derived VDC SHOULD make the full chain available alongside it. Doing so discloses the whole ancestry, including the identity of the principal, to the verifier — which is why a single hop is the default and why chain validity is a candidate for zero-knowledge presentation (see [Zero-Knowledge and Selective Disclosure](#zero-knowledge-and-selective-disclosure) and [Privacy Considerations](#privacy-considerations) item 13).
+
+#### Invocation Binding
+
+A VDC is not a bearer token. A verifier MUST NOT accept a party as acting in the delegator's name unless that party demonstrates control of the verification method associated with `credentialSubject.id` at the time of the request. A VDC presented without such a demonstration is evidence that a delegation exists; it is not evidence that the party presenting it is the delegate. This section states only what a verifier must have established; how the demonstration is requested and carried is part of the trust task in which the delegation is exercised and is defined by the DTG Core Trust Task Protocols specification (see [Grant and Invocation](#grant-and-invocation)).
+
+#### Relationship to Capability Models
+
+*This subsection is informative.*
+
+Chaining, attenuation, and invocation are well-explored outside the W3C VC data model, notably in [ZCAP-LD](https://w3c-ccg.github.io/zcap-spec/) and [UCAN](https://github.com/ucan-wg/spec). The VDC reuses their mechanics — attenuation-only re-delegation, chains resolving to a recognized root, and binding to a demonstration of key control at invocation — rather than inventing a different set.
+
+The semantics differ, and the distinction in [Delegation and Authority](#delegation-and-authority) is exactly the one at issue: those models chain *permissions*, whereas a VDC chains *representation*. Within this specification, chained permissions are the [[ref: VAC]]'s territory, and its [Attenuation](#attenuation) rules apply the same mechanics to authority. The mechanics are shared because both must answer how a grant narrows as it passes down a chain and how it is bound to the party invoking it, not because the thing being passed is the same.
+
+The VDC expresses those mechanics as a DTG credential, rather than referencing an external capability token, for two reasons. First, a delegation is a durable edge of the graph and is expected to be reasoned about alongside the other DTG edges. Second, this specification's schemas are kept minimal so that holders can satisfy predicates in zero knowledge; an opaque embedded token would place the one payload a verifier most needs to reason about — the scope — outside the reach of that machinery. Mappings between VDCs and these formats are left to future work.
+
+### Edge Verifiability
+
+This section is normative.
+
+A [[ref: DTG edge credential]] whose `proof` verifies establishes that its issuer made the statement the credential carries. Whether a verifier additionally treats that statement as an edge of a particular graph is a separate determination, made against the set of [[ref: VTCs]] that verifier accepts as trust anchors. This section defines that determination.
+
+An edge credential is **verifiable as a DTG edge by a given verifier** when both of the following hold:
+
+1. The credential satisfies the verification requirements of [Security Considerations](#security-considerations).
+2. The verifier can establish, per [Membership Edge Completion](#membership-edge-completion), that the credential's issuer's membership in a [[ref: VTC]] in the anchor set that verifier accepts is complete.
+
+Edge verifiability is therefore a property of a credential *with respect to a verifier*, not of the credential alone. The same credential MAY be an edge to a verifier that accepts a given anchor set and not an edge to one that does not, and neither verifier is in error. A [[ref: VTN]] is the common case of such an anchor set, but this specification does not require a verifier to be reasoning within a VTN, nor require any VTN to exist. In particular, an edge whose two halves trace to VTCs anchored in different VTNs, or in none, is an edge to any verifier whose accepted anchor set includes the VTC each half traces to.
+
+Condition 2 MAY be satisfied by either of two routes:
+
+- **By disclosure**, where the credential's issuer identifier is the one its [[ref: VMC]] names as subject, and the verifier obtains the community-issued and member-issued VMC pair (or the issuer's own demonstration of its community-issued VMC, per [Membership Edge Completion](#membership-edge-completion)) and checks the issuing VTC against its anchor set.
+- **By proof**, where the holder presents a [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof), which establishes the same predicate without revealing the DIDs or the credentials.
+
+Neither route is privileged in principle. A VRC whose issuer identifier is `pairwise` and distinct from the one its VMC names, presented with a valid community-anchored proof, is an edge on the same terms as one issued from the VMC's own subject identifier and presented by disclosure. Today's construction establishes the two memberships unevenly, however: for the holder's own membership (proof statement 2), the proof is equivalent to the holder disclosing their own completed VMC pair; for the counterparty's membership (proof statement 3), it currently establishes only that the community attested it, not that the counterparty acknowledged it — the same open status the note below records for the linkage between a `pairwise` identifier and its holder's VMC, and one that the trust task and ZK protocol work will need to close in the same pass (see [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof)). Because the pairwise form is the one this specification RECOMMENDS on privacy grounds (see [Unilateral Relationship Identification](#unilateral-relationship-identification) and [Privacy Considerations](#privacy-considerations)), a definition of edge verifiability that admitted only the disclosure route would exclude the construction the specification recommends.
+
+Each half of an edge is issued and signed by its own issuer, and is evaluated independently under this section. Nothing here requires a single credential to carry signatures from both peers, requires both halves of an edge to satisfy this section, or requires them to satisfy it by the same route.
+
+**Note:** The identity linkage on which the proof route depends — that the party controlling the identifier appearing in the credential is the party holding the VMC under a different identifier — is not yet encoded by this credential model. Until that encoding is specified, the proof route states an intended design goal rather than an implementable construction, and implementations SHOULD expect the encoding to constrain the proof's witness data. It does not affect whether an edge established by that route counts.
+
+## VIC (Verifiable Invitation Credential)
+
+This section is normative.
+
+**Purpose:** Authorizes a prospective member to join a [[ref: VTC]] or [[ref: VTN]] when presented to the [[ref: VTA]]/[[ref: PEP]]. The [[ref: DTG invitation credential]] has two functional variants distinguished by issuer and subject rules (not by separate type strings): the [[ref: VTC invitation credential]] and the [[ref: VTN invitation credential]].
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"InvitationCredential"`
+- `issuer` (string, REQUIRED):
+  - For VTC invitation: DID of the VTC, or of an authorized member (per policy)
+  - For VTN invitation: DID of the VTN, or of a member VTC (per policy)
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure); `public` where the issuer is the VTC or VTN itself
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED):
+    - For VTC invitation: DID of the prospective member, or of a prospective member VTC
+    - For VTN invitation: DID of the prospective member VTC
+
+**Example (VTC member invitation):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "InvitationCredential"],
+  "issuer": "did:key:z6MkhaXgBZD...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2026-02-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs..."
+  },
+  "proof": { "//": "..." }
+}
+```
+
+> **Editor's note — roles and access control:** Roles and access control policy details are primarily inferred from the issuer plus the [trust registry](https://glossary.trustoverip.org/#term:trust-registry). An earlier open question for this Working Draft was whether any of this information should be embedded in the VIC itself. It should not: what a party may *do* is conferred by a [[ref: VAC]] (see [VAC (Verifiable Authority Credential)](#vac-verifiable-authority-credential)), which can be reissued or attenuated without touching the invitation that admitted them.
+
+## VPC (Verifiable Persona Credential)
+
+This section is normative.
+
+**Purpose:** Links a [[ref: persona]] to an existing relationship, enabling the holder to control intentional correlation across relationships.
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"PersonaCredential"`
+- `issuer` (string, REQUIRED): DID under which the persona is asserted
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure); ordinarily `directed` — a persona exists to be recognized across a set of counterparties the holder chooses
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the counterparty as used in the relationship
+
+**Example:**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "PersonaCredential"],
+  "issuer": "did:key:z6MkrKqT9pL...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:peer:2.Ez6LSpSrLxn..."
+  },
+  "proof": { "//": "..." }
+}
+```
+
+## VSC (Verifiable Statement Credential)
+
+This section is normative.
+
+**Purpose:** Carries a signed statement, by one [[ref: DTG node]] about another, whose meaning is fixed by a governed vocabulary. A VSC is the DTG's general-purpose claim: "I inspected this party's passport", "this party attended this event", "I witnessed this party issue this credential", "I endorse this party's skill". Each is a statement that a verifier reads and either believes or does not. Rather than give each such predicate a credential type of its own, this specification defines one type and lets a **predicate profile** fix the constraints of each predicate. The [[ref: VEC]] and the [[ref: VWC]] are the first two profiles.
+
+> **Editor's note — this Working Draft.** The VSC replaces the concrete `EndorsementCredential` and `WitnessCredential` subtypes of Working Draft 02, which are now the [`dtg:endorses`](#the-dtgendorses-profile-vec) and [`dtg:witnessed`](#the-dtgwitnessed-profile-vwc) profiles below. The names VEC and VWC are retained for those profiles. The type strings `EndorsementCredential` and `WitnessCredential` are not retained: a VSC carries exactly one channel of meaning, its `predicate`, so that a type string and a predicate can never disagree.
+
+> **Notation.** In this document `dtg:` abbreviates a predicate's current name in the DTG VSC Predicate Registry: `dtg:witnessed` denotes `https://registry.trustoverip.org/dtg/vsc/witnessed/1`. This is documentation notation only; on the wire a predicate is always the absolute IRI. The three DTG namespaces version differently: a **predicate** carries its own integer path segment (`.../witnessed/1`, `.../witnessed/2`, …), each `<name>/<n>` immutable and distinct; **vocabulary** — types and properties such as `DTGCredential` and `taskContext`, at the unversioned `https://registry.trustoverip.org/dtg/credentials#` — has no numbered-sibling convention, so a changed meaning would be a new term, not a new version; the **context**, `https://registry.trustoverip.org/dtg/context/v1`, versions as one frozen document per `vN`, with every prior version served forever.
+
+### Statements and Establishment
+
+*This subsection is informative.*
+
+Every DTG credential is either a **statement** or an **establishment**, and the difference is in what a verifier has to do:
+
+- If verifying a credential means checking the signature, checking the status, and reading the claim, it is a statement. It attests that something is so, and the verifier decides what to make of it. Statements share one type, the VSC, and differ only in their predicate.
+- If the verifier must do more — complete an edge from two halves, match a consent digest, resolve a chain, contain a scope, or hand the credential to a [[ref: policy enforcement point]] that acts on it — the credential establishes something, and it is a concrete subtype of its own. The [[ref: VRC]], [[ref: VMC]], [[ref: VDC]], [[ref: VAC]] and [[ref: VIC]] are establishments.
+
+This is the test the [[ref: VDC]] section already applies (see [VDC](#vdc-verifiable-delegation-credential)), stated once so that a contributor proposing a new predicate knows whether it is a profile or a type. The [[ref: VPC]] is statement-shaped but carries [[ref: correlation scope]] semantics — its issuer *is* the persona identifier — and is left as a concrete subtype for that reason.
+
+A statement is **evidence**. Governance turns evidence into establishment: a [[ref: VTC]] may weigh an observation statement when deciding to admit a member, an `isHuman` statement when deciding whether a membership qualifies as a [[ref: PHC]], or a role statement when deciding to issue a [[ref: VAC]]. The statement never establishes the membership, the personhood, or the authority itself; see [What Verification Establishes](#what-verification-establishes).
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"StatementCredential"` and MUST NOT include any other concrete `DTGCredential` subtype. The predicate, not the type array, identifies the profile.
+- `issuer` (string, REQUIRED): DID of the party making the statement
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure). A profile MAY state the minimum scope its issuer can truthfully declare, and a verifier MUST NOT accept a statement under such a profile whose `issuerScope` is narrower than that minimum — see [Correlation Scope](#correlation-scope)
+- `taskContext` (string, OPTIONAL unless the profile requires it): see [Trust Task Context Binding](#trust-task-context-binding)
+- `taskDigestMultibase` (string, REQUIRED wherever the profile requires `taskContext`, OPTIONAL otherwise): see [The `taskDigestMultibase` Property](#the-taskdigestmultibase-property)
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the [[ref: DTG node]] the statement is about
+  - `predicate` (string, REQUIRED): the term that fixes the statement's meaning, expressed as an absolute IRI — see [Predicate Handling](#predicate-handling). Compact forms (CURIEs, JSON-LD terms) are not permitted on the wire, so that a predicate has exactly one representation and matching it never depends on context processing. Predicates defined by this specification live in the DTG namespace; predicates defined by a community live in a namespace the community controls
+  - `object` (object, REQUIRED): what the statement says about the subject, carrying exactly one of:
+    - `id` (string): a DID or other IRI, when the object is a party or a named thing
+    - `digestMultibase` (string): when the object is another credential, computed and encoded as specified in [Digest Encoding](#digest-encoding)
+    - `value` (any): a literal or structured payload, when the object is neither. A profile that permits `value` MUST state its schema
+  - further members as the profile defines
+
+A VSC is **unilateral**: its issuer alone signs it, and it is complete without any counterparty's participation. A predicate that is only true when the counterparty agrees — a relationship, a membership, an appointment — is an edge, and belongs in [Edge Credentials](#edge-credentials) with an acknowledgement half, not in a profile.
+
+### Predicate Handling
+
+This subsection is normative.
+
+A predicate is an identifier, and it is matched as one. A verifier MUST process `predicate` as follows:
+
+1. If the value is not an absolute IRI, the verifier MUST reject the credential. No expansion is performed: a compact form is malformed, not unknown.
+2. If the IRI is not a term in a vocabulary the verifier accepts, the verifier MUST reject the credential. The set of accepted vocabularies is the verifier's configuration, informed by the governance frameworks and trust registries it relies on. It is never derived from the credential.
+3. Otherwise, apply the constraints of the predicate's profile, which the verifier holds as part of the same configuration.
+
+Because the value is matched as written, this procedure needs neither the credential's `@context` nor a JSON-LD processor, and gives the same result under every securing mechanism.
+
+Rejection is the only conforming outcome for an unrecognized predicate. A verifier MUST NOT process such a credential as a generic statement, MUST NOT infer meaning from the predicate's spelling, and MUST NOT accept a predicate on the strength of an equivalence (`owl:sameAs`, `skos:exactMatch`, or any similar assertion) published by anyone. Whether two predicates are to be treated alike is a governance decision, applied through configuration.
+
+Comparison is exact, on the IRI as written. Nothing in the pipeline normalizes an IRI, so the obligation to produce a canonical one lies with whoever defines it:
+
+- A predicate IRI MUST be in Unicode Normalization Form C, as recommended for IRIs by [RFC 3987 §5](https://www.rfc-editor.org/rfc/rfc3987#section-5). Two predicates that render identically but differ as byte strings are two predicates.
+- A predicate IRI is an identifier, not a word. Its human-readable spelling carries no meaning; a vocabulary SHOULD supply names through `rdfs:label` values with language tags, so that one identifier serves every language its community uses.
+- A predicate IRI MUST resolve to its definition (see [Predicate Profiles](#predicate-profiles)). Resolution is for the parties configuring a verifier, not for the verifier at verification time: a verifier MUST NOT need to dereference a predicate in order to verify a credential, since doing so would disclose what is being verified to whoever hosts the vocabulary and would make verification depend on that host's availability. The same principle governs digests — see [Digest Encoding](#digest-encoding).
+- A published predicate MUST NOT change meaning. A vocabulary is additive: a term, once published, is neither altered nor removed, only deprecated, and adding a term leaves every other term's IRI untouched, so the namespace carries no version segment. A JSON-LD `@context` that credentials list MUST NOT change once published; additions to it are made under a new context version IRI.
+
+### What Verification Establishes
+
+This subsection is normative.
+
+Recognizing a predicate tells a verifier what a statement *means*. Verifying the credential establishes that its issuer made that statement, that the signature and status are good, and that the profile's constraints are met. Neither determines how far the statement may be carried as evidence. Two rules bound that:
+
+1. **The type-level bound.** A VSC attests; it never establishes. Whatever its predicate says, a verifier MUST NOT treat a VSC as conferring representation, authority, membership, admission, or a governed status such as personhood, and MUST NOT treat it as proof that a trust task or ceremony completed. Those are established only by the credentials defined for them ([[ref: VDC]], [[ref: VAC]], [[ref: VMC]], [[ref: VIC]], [[ref: PHC]]) and by trust task outcome evidence ([Outcome Interpretability](#outcome-interpretability)). A predicate named `mayActFor` is a string.
+2. **The profile's bound.** Every profile states what successful verification establishes and what it explicitly does not (see [Predicate Profiles](#predicate-profiles)). A verifier MUST NOT draw a conclusion from a VSC that its profile does not state.
+
+A profile classifies a statement's shape. It does not narrow any obligation that applies to a DTG credential independently of its type: the `taskContext` and outcome-evidence requirements of [Trust Task Context Binding](#trust-task-context-binding), the [[ref: correlation scope]] requirements, and the status and validity checks of [Security Considerations](#security-considerations) all apply to a VSC exactly as they apply to a concrete subtype. That a VSC is verified by "signature, status, claim" describes its own content; it says nothing about the evidence its meaning may depend on.
+
+### Predicate Profiles
+
+This subsection is normative.
+
+A **predicate profile** is the normative definition of one predicate. The [DTG VSC Predicate Registry](#related-specifications) defines the profiles for the predicates in the DTG namespace, including the two core profiles this specification names below. A [[ref: VTC]] or [[ref: VTN]] MAY define profiles for predicates in a namespace it controls, in its governance framework or in a vocabulary document that framework references. A profile MUST state:
+
+1. the predicate IRI and its meaning, with `rdfs:label` values in the languages the defining community uses;
+2. whether the statement is **evidence** — weighed by a governing body under its framework — or an **assertion of status** the issuer is entitled to make about the subject; for evidence, the profile SHOULD say who is expected to weigh it;
+3. which `object` kind or kinds are permitted, and for `value` the schema of the payload;
+4. any relationship required between subject, object and issuer (for example, that the subject is the issuer of the credential the object names);
+5. any additional `credentialSubject` members, whether each is REQUIRED or OPTIONAL, and its schema. A verifier MUST ignore additional members a profile does not define, so that a profile can add optional members without invalidating credentials for older verifiers; strictness lives in the predicate, not in the payload;
+6. whether `taskContext` is REQUIRED — and with it `taskDigestMultibase` (see [Trust Task Context Binding](#trust-task-context-binding));
+7. the minimum [[ref: correlation scope]] the issuer can truthfully declare, if the predicate constrains it;
+8. who may issue the statement — the subject itself, any member, or a [[ref: VTA]] acting under the community's policy;
+9. **what successful verification establishes, and what it explicitly does not.** For every predicate an implementer must be able to answer: what does a pass mean, and what does it not mean? The type-level bound in [What Verification Establishes](#what-verification-establishes) applies to every profile and need not be restated, but a profile MUST state any further limit specific to it — that a witnessed credential is not thereby current, that an endorsement is not thereby true.
+
+Two constraints on what may be a profile at all:
+
+- A predicate that is only meaningful inside the exchange in which it was issued is a trust task artifact, not a statement; see [Credentials versus Trust Task Artifacts](#credentials-versus-trust-task-artifacts).
+- A predicate whose truth depends on the completion of more than one trust task, where those tasks do not nest, MUST be expressed as one VSC per task, each carrying that task's `taskContext`, never as a single credential with more than one implicit referent. Which exchange a nested `taskContext` names is defined by the Trust Tasks specification's rule for [naming an exchange from outside the framework](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#naming-an-exchange-from-outside-the-framework): the innermost exchange that attests the event.
+
+> **Note — where profiles live.** *Informative.* This specification defines the statement mechanism: the VSC type, [Predicate Handling](#predicate-handling), [What Verification Establishes](#what-verification-establishes), and the nine members above that every profile states. The profiles themselves, including the two core profiles this specification names as the VEC and the VWC, are defined in the **DTG VSC Predicate Registry**, a repo-driven registry on the model of the ToIP glossary rather than a specification: one definition file per predicate in the format the nine points above describe, generated into a human-readable document served at the predicate namespace, and a machine-readable accept-list for verifiers; governed by pull request under stated admission criteria, on its own cadence (see [Related Specifications](#related-specifications)). This specification does not otherwise name a predicate; [Community-Defined Predicates](#community-defined-predicates) carries one illustrative example and no more. Convergence across communities is served by admitting a community predicate to the registry once it is in use by more than one community. Admission is a convenience, not a gate: because a predicate is an absolute IRI that a verifier accepts by configuration, a community that publishes a predicate under a namespace it controls can issue under it, and verifiers can accept it, without waiting on or ever seeking admission to the registry. The registry curates a shared default set; it does not decide who may make a statement.
+
+### Statements in the Graph
+
+This subsection is normative.
+
+A VSC's issuer is part of the statement. An implementation that assembles VSCs into a graph — for display, for query, or as input to a governance decision — MUST keep each credential as the unit of attribution, so that no statement about a node is ever separated from the identifier that made it and the proof that supports it. Flattening statements into bare subject–predicate–object facts is not a conforming representation of the DTG.
+
+> **Note — relationship to RDF.** *Informative.* A VSC has the shape of a reified RDF statement: `credentialSubject.id`, `predicate` and `object` play the roles of `rdf:subject`, `rdf:predicate` and `rdf:object`, and the credential's `issuer`, validity and `proof` are the annotations RDF reification never had a standard way to carry. In RDF 1.2 terms the credential is the *reifier* of the triple it quotes. The correspondence is informative: under the JSON-LD contexts this specification requires, a VSC does not expand to an `rdf:Statement`, because `id` names the `credentialSubject` node rather than a statement node. This is why the graph rule above is stated on credentials rather than on triples. Making the correspondence exact is possible later by moving the subject out of `id` into a dedicated member, and is deferred until there is a consumer for the expansion.
+
+> **Note — context terms.** *Informative.* The DTG context ([Context Versions](#context-versions)) defines `predicate` with `"@type": "@id"`, so that JSON-LD processors treat the value as the IRI it already is; `object.value` with `"@type": "@json"`, so that a structured payload is an opaque `rdf:JSON` literal canonicalized by JCS rather than a nested graph; and `object.id` as the node identifier it is. The additional members of a core profile — a [[ref: VWC]]'s `witnessContext` and its `event`, `sessionId` and `method` — are defined in the same context, so adding a member to a profile is a new context version. None of this changes what a verifier does: [Predicate Handling](#predicate-handling) applies to the `predicate` value as written, without context processing.
+
+### The `dtg:endorses` Profile (VEC)
+
+A VSC whose predicate is `dtg:endorses` ([`https://registry.trustoverip.org/dtg/vsc/endorses/1`](https://registry.trustoverip.org/dtg/vsc/endorses/1)) is a **verifiable endorsement credential** ([[ref: VEC]]): the issuer asserts something favorable about the subject — a skill, a standing, a reputation — under an endorsement vocabulary the governing [[ref: VTC]] or [[ref: VTN]] defines.
+
+The profile is defined by the registry entry at that IRI: its classification, the object kind it permits, whether `taskContext` is required, the minimum scope its issuer can truthfully declare, who may issue, and what verification establishes and does not establish. This specification does not restate those members. A verifier that accepts the predicate configures against the entry, as [Predicate Handling](#predicate-handling) requires, and the bound of [What Verification Establishes](#what-verification-establishes) applies in full: an endorsement is evidence, and its verifiability is the issuer's signature, not the truth of the assertion.
+
+**Example:**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:key:z6MkhaXgBZD...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs...",
+    "predicate": "https://registry.trustoverip.org/dtg/vsc/endorses/1",
+    "object": {
+      "value": {
+        "type": "SkillEndorsement",
+        "name": "Software Development",
+        "competencyLevel": "expert"
+      }
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+### The `dtg:witnessed` Profile (VWC)
+
+A VSC whose predicate is `dtg:witnessed` ([`https://registry.trustoverip.org/dtg/vsc/witnessed/1`](https://registry.trustoverip.org/dtg/vsc/witnessed/1)) is a **verifiable witness credential** ([[ref: VWC]]): the issuer attests that it observed the subject issue the credential `object.digestMultibase` names, under the conditions of a specific trust task exchange. The witness may be a person or a [[ref: VTA]] applying the witnessing policies of a [[ref: VTC]] — for example, verifying that both parties were present at the same event, or provided proof of biometric liveness at the time of relationship formation.
+
+The profile is defined by the registry entry at that IRI, including its optional `witnessContext` member and its subject–object rule, which binds each VWC to one direction of the edge it attests. A witnessed exchange of a complete [[ref: DTG edge]] is bidirectional — two VRCs, or the two VMCs of a membership edge, formed in one witnessing event — and for such an exchange the witness SHOULD issue one VWC per direction. Two of its requirements engage mechanisms of this specification. The profile requires `taskContext` and `taskDigestMultibase`, so [Trust Task Context Binding](#trust-task-context-binding) and [Outcome Interpretability](#outcome-interpretability) apply to every VWC. And its object is a digest computed as [Digest Encoding](#digest-encoding) specifies, so a verifier identifies the witnessed edge only with the referenced edge credential to hand; a digest alone is an opaque hash, and issuers and holders presenting a VWC as evidence of a specific edge SHOULD make that credential available alongside it.
+
+**Example:**
+
+*Illustrative values: identifiers are truncated, and neither digest is computed from a printed document — [`witness/session/0.1`](https://trusttasks.org/spec/witness/session/0.1) prints no session document to compute `taskDigestMultibase` from. For a statement whose `taskDigestMultibase` reproduces from the documents as printed, see the Vetting Statement in [`vetting/session/0.1`](https://trusttasks.org/spec/vetting/session/0.1).*
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:webvh:QmVzTd9hRkPqLu4WgXyN...:witness-service.example",
+  "issuerScope": "public",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "taskContext": "urn:uuid:2c7f5d19-6e0b-4c3d-8a41-9b2e6f0d4c88",
+  "taskDigestMultibase": "zQmWhCFfStzUE4HGseiQ1XWi2eEp1GTQEKnt2jyBe7uqzXD",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs...",
+    "predicate": "https://registry.trustoverip.org/dtg/vsc/witnessed/1",
+    "object": {
+      "digestMultibase": "zQmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n"
+    },
+    "witnessContext": {
+      "event": "EthDenver 2024",
+      "sessionId": "session-abc-123",
+      "method": "in-person-proximity"
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+### Community-Defined Predicates
+
+*This subsection is informative.*
+
+A community defines a predicate by publishing, under a namespace it controls, the profile members listed in [Predicate Profiles](#predicate-profiles), and referencing that vocabulary from its governance framework. An observation statement under such a predicate:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:key:z6Mk...observer",
+  "issuerScope": "directed",
+  "validFrom": "2026-09-08T10:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6Mk...subject",
+    "predicate": "https://vtc.example/vocab#observedDocument",
+    "object": {
+      "value": { "documentType": "passport", "issuingCountry": "NL" }
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+A verifier that has not been configured to accept `https://vtc.example/vocab#` rejects this credential under [Predicate Handling](#predicate-handling), however well-formed it is and however good its signature. That is the intended behaviour: which vocabularies count is decided by the governance a verifier relies on, not by an issuer.
+
+#### Worked Example: An Identity Vetting Predicate
+
+*This subsection is informative.*
+
+A longer example, because it exercises every member of [Predicate Profiles](#predicate-profiles) and shows why a use case of this kind is a predicate of its own rather than a payload smuggled into an existing one.
+
+The use is peer identity vetting. An existing member of a community — the *vetter* — checks in person or on video that an *applicant* is who they claim to be and controls the identifier they will join with. The vetter records that check as a statement. The community collects several such statements and decides admission on them. The identifiers below are illustrative, and the predicate is defined in a namespace the community controls, to show how a community defines a predicate of its own. The same profile is also published in the [DTG VSC Predicate Registry](#related-specifications) as `dtg:vetted` (`https://registry.trustoverip.org/dtg/vsc/vetted/1`), whose entry is its normative definition; this example is informative. A community running peer vetting can use that IRI when it wants its statements to interoperate with other communities'.
+
+**Why its own predicate.** A vetting statement is a record of a procedure: a named member carried out a check, by a stated method, against stated classes of document, on a stated date. `dtg:endorses` says something favorable about the subject and leaves the vocabulary to the community — it would carry the payload, but it would also say that the vetter *endorses* the applicant, which is not what the vetter did and not what the community weighs. `dtg:witnessed` is about observing a credential being issued, not about checking a person. Giving the check its own predicate keeps the three meanings apart in the graph, so a community that recognizes one need not recognize the others, and a verifier reading a statement learns which question was actually answered.
+
+It also removes a difficulty. A vetting statement is made before any edge exists: the vetter and the applicant may share no relationship, and the applicant is not yet a member. A statement annotates a node, so nothing has to be invented to explain what edge the statement presumes.
+
+**The profile.** As required by [Predicate Profiles](#predicate-profiles):
+
+- **Predicate:** `https://vtc.example/vocab/vetting/v1#vetted` — the issuer attests that it checked the subject's claimed identity in a vetting session, by the method and against the document classes the object states.
+- **Classification:** evidence, weighed by the community named in the object when it decides admission. A statement is not a decision, and a community may require several from distinct vetters.
+- **Object:** `value`, whose members are:
+  - `community`: the identifier of the one community the statement was made for.
+  - `method`: how the check was made — for example `inPerson`, `video` or `priorAcquaintance`.
+  - `documentClasses`: the classes of identity document the vetter relied on, for example `passport`. Empty where the vetter relied on prior acquaintance alone. It never carries a document number, image or portrait.
+  - `claimsVerified`: the claim *types* the vetter checked against the person, for example `name.legal`. Claim values do not appear.
+  - `livenessConfirmed`: whether the vetter confirmed during the session that the person in front of them controlled `credentialSubject.id`, for example by both parties reading aloud a code derived from the session.
+  - `identityCommitment`: a salted commitment to the identity claims the applicant presented. See *The identity commitment* below.
+  - `cardDigestMultibase`: the digest of the signed card the applicant presented, computed as specified in [Digest Encoding](#digest-encoding) over the card exactly as the vetter received it. It lets a dispute or audit identify the exact card relied on, without the community ever receiving the card.
+  - `declaredRelationship`: the vetter's declared prior relationship to the applicant — for example `none`, `communityColleague`, `sameEmployer` or `family` — so a community can limit how many statements from related vetters it counts.
+  - `attestationTextDigest`: the digest of the governance text the vetter was shown before signing, so the version they attested under can be proven. Optional: a community that shows no attestation text has nothing to digest.
+
+  Enumerated values are camelCase, the convention the W3C Verifiable Credentials Data Model v2.0 and Data Integrity use for their own values (for example `assertionMethod`).
+- **Subject–object relationship:** none required. The subject is the identifier the applicant will join with, and the object describes the check rather than naming another credential.
+- **Additional members:** none beyond those [VSC (Verifiable Statement Credential)](#vsc-verifiable-statement-credential) defines.
+- **`taskContext`:** REQUIRED by this profile — the vetting exchange in which the check happened. The statement remains true afterwards, so it is a credential rather than a trust task artifact by the test in [Credentials versus Trust Task Artifacts](#credentials-versus-trust-task-artifacts), but the exchange is what a dispute would examine.
+- **Issuer scope:** `directed` at minimum. The issuer must be recognizable to the community weighing the statement, so a `pairwise` declaration could not describe it truthfully.
+- **Issuer:** a member the community has made eligible to vet, issuing under the member identifier its [[ref: VMC]] names. Eligibility is the community's to confer and to withdraw, and a verifier checks it under community policy rather than inferring it from this statement.
+- **Verification establishes:** that the named member states it carried out the described check on the subject's claimed identity, in the exchange `taskContext` names.
+- **Verification does not establish:** that the applicant's claimed identity is true; that the vetter was eligible to vet, which is a fact about the community and is checked separately; that the check was competent; or that the applicant has been admitted anywhere. Admission is a decision the community records, and this statement is one input to it.
+
+**Example:**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1",
+    "https://w3id.org/security/suites/ed25519-2020/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "StatementCredential"],
+  "issuer": "did:key:z6MkpTHR8VNs...",
+  "issuerScope": "directed",
+  "validFrom": "2026-09-20T10:14:00Z",
+  "validUntil": "2027-01-18T10:14:00Z",
+  "taskContext": "urn:uuid:5b0c7e0e-3f7a-4c52-9d0e-2a7c1f6b9e41",
+  "taskDigestMultibase": "zQm...",
+  "credentialSubject": {
+    "id": "did:key:z6MkjRagNiMu...",
+    "predicate": "https://vtc.example/vocab/vetting/v1#vetted",
+    "object": {
+      "value": {
+        "community": "did:webvh:QmSbCcXWDDJmqE8m1nZ...:chess-club.example",
+        "method": "video",
+        "documentClasses": ["passport"],
+        "claimsVerified": ["name.legal"],
+        "livenessConfirmed": true,
+        "identityCommitment": "zQm...",
+        "cardDigestMultibase": "zQm...",
+        "declaredRelationship": "communityColleague",
+        "attestationTextDigest": "zQm..."
+      }
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+**Validity and status.** `validUntil` is bounded by the community's policy on how old vetting evidence may be when admission is decided; the statement is evidence for one decision, not a lifelong claim, and its expiry does not undo a decision already recorded. `credentialStatus` may be absent where the community is the only party relying on the statement and a vetter withdraws by notifying the community directly — a status list holding one vetter's few statements would offer little herd privacy.
+
+**Scoped to one community.** `object.value.community` names the community whose vocabulary gives the statement its meaning. Another community reading the same statement has no defined meaning for it, and would count it only under a recognition policy of its own; one community's recognition does not carry to a third. The same applies to eligibility: that the issuer was eligible to vet is a fact about the named community.
+
+**The identity commitment.** The editor's note in [Digest Encoding](#digest-encoding) records that a digest over low-entropy content can be reversed by enumeration, and a digest of a legal name is exactly that. This profile salts its own member and leaves the members that section covers to the ZKP task force's blinding work.
+
+- The applicant's software generates a random 32-byte salt once per application, and puts the same salt on every card of that application.
+- `identityCommitment` is the digest, encoded as in [Digest Encoding](#digest-encoding), of the JCS canonical form of an object holding the salt and the identity claims.
+- The salt travels to vetters inside the card and never to the community. Vetters already see the claims, so it reveals nothing new to them.
+
+That gives three properties. Every vetter recomputes the same commitment, so the community can check that all statements concern the same claimed identity without learning it. A party without the salt cannot test candidate values against the commitment. And a fresh salt per application leaves commitments from separate applications unrelated, even for the same person. It does not stop a vetter who keeps a card from recognizing the commitment later; that is a question of governance and retention rather than of the construction.
+
+## VAC (Verifiable Authority Credential)
+
+This section is normative.
+
+A VAC confers permission. It differs from every other credential here in what it does to the graph: an edge credential establishes that two nodes are connected, a statement or persona credential attaches a claim to a node already in the graph, and an invitation credential bootstraps a node into a community. A VAC does none of those. It states what a party **may do** within a scope that some node governs.
+
+The distinction that matters most is between a VAC and a [[ref: VSC]] — an endorsement ([[ref: VEC]]), say. An endorsement is a statement *about* a party — that they are skilled, trusted, or of good standing — and a verifier decides for itself what to do with that statement. A VAC is a statement *to* a verifier: the issuer, who governs the scope, has decided. Conflating the two puts a decision that belongs to the governing party into a claim that reads as reputation, and leaves verifiers to infer permission from adjectives.
+
+**Purpose:** Confers authority on a party to perform specified actions within a named scope governed by the issuer.
+
+**Schema:**
+
+- `type` (array, REQUIRED): MUST include `"AuthorityCredential"`
+- `issuer` (string, REQUIRED): DID of the party that governs the scope — a [[ref: VTC]] or [[ref: VTN]], another [[ref: DTG node]] such as a shared resource or service, or a holder attenuating authority they themselves hold (see *Attenuation* below). As for every DTG credential, the issuer's [[ref: correlation scope]] is declared rather than encoded in the identifier; see [Correlation Scope](#correlation-scope)
+- `issuerScope` (string, REQUIRED): `pairwise`, `directed` or `public`, per [Base Structure](#base-structure); `public` where the issuer is the governing party, and the holder's own declaration on an attenuated VAC
+- `credentialSubject` (object, REQUIRED):
+  - `id` (string, REQUIRED): DID of the party receiving the authority
+  - `authority` (object, REQUIRED):
+    - `scope` (string, REQUIRED): the DID or URI the authority applies to. A verifier MUST reject a VAC whose `scope` does not match the resource being accessed; scope matching is exact unless the governing party publishes a containment rule.
+    - `actions` (array of strings, REQUIRED): the permitted actions, drawn from a vocabulary the governing party defines. MUST NOT be empty — an empty array is not a wildcard, and a verifier MUST treat it as conferring nothing. Action strings are compared as exact, case-sensitive strings; a verifier MUST NOT infer that one action implies another (`"admin"` does not grant `"write"` unless the governing party's VAC says both).
+    - `parent` (string, OPTIONAL): the digest of the VAC this one was attenuated from, encoded as specified in [Digest Encoding](#digest-encoding). Absent means this VAC was issued directly by the governing party.
+    - `maxAttenuation` (integer, OPTIONAL): the number of further attenuations permitted below this VAC. `0` prohibits attenuating it at all. When absent, attenuation is permitted as far as the maximum chain depth allows. This is the opposite default from the [[ref: VDC]]'s `maxDepth`, which prohibits re-delegation unless it is set; the field is named differently for that reason. See [Attenuation](#attenuation).
+- `validUntil` (string, REQUIRED): ISO 8601 datetime (`expirationDate` in v1.1). Unlike the base structure, `validUntil` is REQUIRED for a VAC, as it is for a [[ref: VDC]] and for a reason the VAC feels more sharply: nothing about the subject's current standing is consulted when a VAC is verified, so authority that does not expire is authority nobody can withdraw by waiting. Expiry is also the one withdrawal mechanism that costs a verifier no network access; see [Withdrawal](#withdrawal).
+- `credentialStatus` (object, CONDITIONAL): a W3C VC status mechanism through which a verifier can determine whether this VAC has been revoked. A VAC MUST carry `credentialStatus` where its validity period exceeds the freshness window the party governing the scope defines for authority at that scope, and MAY omit it otherwise. The status mechanism is determined by that governing party. See [Withdrawal](#withdrawal).
+
+**Example (a member granted write access to a shared resource):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "AuthorityCredential"],
+  "issuer": "did:webvh:z6Mkw...:example.com:rooms:7f3a",
+  "issuerScope": "public",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2026-07-06T10:00:00Z",
+  "credentialStatus": {
+    "id": "https://example.com/rooms/7f3a/status/1#284",
+    "type": "BitstringStatusListEntry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "284",
+    "statusListCredential": "https://example.com/rooms/7f3a/status/1"
+  },
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs...",
+    "authority": {
+      "scope": "did:webvh:z6Mkw...:example.com:rooms:7f3a",
+      "actions": ["read", "write", "curate"]
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+### Attenuation
+
+A VAC holder MAY issue a further VAC conferring a **subset** of the authority they hold, without involving the governing party. This is what allows a party to equip an agent, a device, or a short-lived session with only the authority that task requires, rather than lending it their own.
+
+**Attenuation is permitted by default; re-delegation is not.** A [[ref: VDC]] forbids re-delegation unless its `maxDepth` explicitly authorises it, and this section takes the opposite default deliberately. Extending the two chains does different things. A further delegation adds a party who may act **in the principal's name**, so the principal must keep the register of who can speak for it, and a delegate that needs help can ask the principal for a fresh root delegation; failing closed costs little. A further attenuation only narrows, and its subject acts **as itself**, so nothing new is attributed to the governing party or to the attenuating holder. More to the point, forbidding attenuation does not stop a holder equipping an agent. It makes them lend their own key instead — which confers everything they hold rather than a subset, lasts as long as their own authority does, and is indistinguishable to a verifier from the holder acting in person. Attenuation is the safer of the two things a holder will actually do, and a default that pushed holders toward the other would buy nothing.
+
+**A governing party can still forbid it.** `authority.maxAttenuation` bounds how far a chain may extend below the VAC that carries it, and `0` forbids attenuation outright — for an action sensitive enough that the governing party wants to decide personally who holds it. A VAC attenuated from a parent bearing `maxAttenuation` *n* MUST NOT itself bear a `maxAttenuation` greater than *n* − 1, and a verifier MUST reject a chain in which any VAC lies more than *n* steps below an ancestor bearing `maxAttenuation` *n*. Any link MAY set a limit lower than its parent's, or set one where its parent set none; none may raise one. The effective limit on a chain is therefore the strictest that any of its links imposes, in keeping with attenuation never widening what it derives from.
+
+An attenuated VAC:
+
+- MUST set `issuer` to the `credentialSubject.id` of the VAC being attenuated — the attenuating holder's own DID. Only the party a VAC was issued to may attenuate it.
+- MUST set `authority.parent` to the digest of the VAC being attenuated, encoded as specified in [Digest Encoding](#digest-encoding).
+- MUST NOT confer any action absent from the parent's `actions`.
+- MUST NOT specify a `validUntil` later than the parent's.
+- MUST NOT widen `scope`.
+- MUST NOT bear a `maxAttenuation` greater than one less than its parent's, where the parent carries one; and MUST NOT exist at all where the parent bears `0`.
+- SHOULD carry a `validUntil` short enough that expiry alone bounds the exposure. An attenuating holder is often a person, a device, or an agent rather than an operator of a status list, and may be unreachable at the moment its grant needs taking back; see [Withdrawal](#withdrawal).
+
+**Verification.** A verifier presented with a VAC that carries `parent` MUST verify the entire chain to a VAC issued by the governing party, and MUST reject the chain if any link widens what its parent conferred, in actions, scope, or validity period, if any link's `issuer` is not the `credentialSubject.id` of its parent, if any link lies further below an ancestor than that ancestor's `maxAttenuation` permits, or if any link that carries `credentialStatus` has been revoked (see [Withdrawal](#withdrawal)). The second check is what gives the first its meaning: without it, a chain could cite a VAC its issuer never held, and "narrowing" would be satisfiable by anyone holding a copy of a governing party's VAC. A verifier that checks only the presented credential has verified nothing: attenuation is only a narrowing if somebody walks the chain.
+
+**The holder presents the chain; the verifier does not fetch it.** A presentation carrying an attenuated VAC MUST include every VAC from the presented one up to and including the one issued by the governing party, and a verifier MUST reject a chain it cannot complete from the presentation alone.
+
+`parent` is a digest rather than an identifier so that this is structural rather than merely required. A digest names nothing that can be fetched: verification cannot come to depend on network availability, a verifier cannot be induced to make a request against an address of the holder's choosing, and nobody who hosts an identifier learns when or how often a credential is used. Bearer-side presentation keeps verification offline, constant in its network behaviour, and free of that correlation channel. A digest also binds an attenuated VAC to the exact claims its issuer narrowed from: re-issuing a parent with different claims does not re-parent the VACs attenuated from the old one, while re-proofing it with identical claims leaves them undisturbed, because the digest excludes `proof` (see [Digest Encoding](#digest-encoding)).
+
+**Chain depth is bounded.** A verifier MUST enforce a maximum chain depth and MUST NOT accept a chain of more than **8** VACs including the one issued by the governing party. Chain verification is linear in depth and runs on every presentation, so an unbounded chain is a denial-of-service vector against the verifier. The known uses need far less — a person attenuating to an agent is depth 2, and an agent attenuating to a sub-agent is depth 3 — so issuers SHOULD stay well below the ceiling, and a party finding itself near it should treat that as a signal the authority is being re-delegated further than intended.
+
+This ceiling and `maxAttenuation` are different controls and a chain MUST satisfy both. The ceiling is a resource bound that every verifier enforces whether or not any issuer asked for it; `maxAttenuation` is a policy an issuer sets for its own grant. A chain of five under a root bearing `maxAttenuation` `2` is within the ceiling and still invalid.
+
+**Who may hold derived authority.** A valid chain establishes that authority was narrowed by parties entitled to narrow it. It does not establish that the party now holding it is one the scope is willing to deal with: an attenuated VAC may name a subject the governing party has never encountered, and that subject acts as itself rather than in its attenuator's name. A governing party MAY require that the subject of an attenuated VAC independently qualify — hold a [[ref: VMC]] at the scope, or satisfy whatever the scope asks of any other actor — and a verifier enforcing such a policy MUST reject a chain whose subject does not, however well formed the chain is. This is the authority-side counterpart of the third check in [How a Delegation Composes with Authority](#how-a-delegation-composes-with-authority), and the reason a VAC and a [[ref: VMC]] stay separate credentials.
+
+**Example (a member attenuating read-only, short-lived authority to their AI agent):**
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://registry.trustoverip.org/dtg/context/v1"
+  ],
+  "type": ["VerifiableCredential", "DTGCredential", "AuthorityCredential"],
+  "issuer": "did:key:z6MkpTHR8VNs...",
+  "issuerScope": "directed",
+  "validFrom": "2026-01-06T10:00:00Z",
+  "validUntil": "2026-01-06T14:00:00Z",
+  "credentialSubject": {
+    "id": "did:key:z6MkfR2aQ9Xv...",
+    "authority": {
+      "scope": "did:webvh:z6Mkw...:example.com:rooms:7f3a",
+      "actions": ["read"],
+      "parent": "zQmSfwf25HTvhmHve5VVWjwmQ9z7LFDWsB9hTweoieva2cd",
+      "maxAttenuation": 0
+    }
+  },
+  "proof": { "//": "..." }
+}
+```
+
+The `parent` value above is the digest of the preceding example, computed as specified in [Digest Encoding](#digest-encoding).
+
+### Invocation
+
+**A VAC is not a bearer credential.** A verifier MUST NOT accept a party as holding the authority a VAC confers unless that party demonstrates control of the verification method associated with the `credentialSubject.id` of the presented VAC, at the time of the request. A VAC presented without such a demonstration is evidence that authority was conferred on somebody; it is not evidence that the party presenting it is that somebody.
+
+This matters more here than for a [[ref: VDC]], because a VAC chain is presented in full on every use. A captured presentation is a captured chain, so a specification that let a holder be identified by possession alone would make every verifier a distribution point for the authority it was shown. It is also what [Relationship to Capability Models](#relationship-to-capability-models) already claims of this section: the mechanics the VDC borrows are attenuation-only derivation, chains resolving to a recognized root, **and binding to a demonstration of key control at invocation**. The VAC applied the first two and left the third unsaid.
+
+**There is no second party check, and no field naming one.** An earlier draft of the VAC carried an OPTIONAL `audience` naming the DID that must present the credential. The rule above makes it redundant: the presenter must be the subject, so an `audience` either names that same subject and adds nothing, or names someone else and no presentation can ever satisfy both. It is removed rather than kept as a weaker second check. A VAC is bound to the party it was issued to by `credentialSubject.id`, and to the resource it may be used against by `scope`; naming an intended verifier as well would restrict where a presentation may be made, which is a question for the trust task rather than the credential.
+
+**Only the presented VAC's subject demonstrates anything.** The parties named in the links above it are not present and are not asked for anything. Requiring otherwise would defeat attenuation, whose whole purpose is that the party who attenuated is not in the loop when its agent acts.
+
+This section states only what a verifier MUST have established. How the demonstration is requested and carried is part of the trust task in which the authority is exercised, and is defined by the planned DTG Core Trust Task Protocols specification, as it is for a VDC (see [Invocation Binding](#invocation-binding)).
+
+### Withdrawal
+
+A VAC is withdrawn in one of two ways: it expires, or its issuer revokes it. There is no third. A [[ref: VDC]] has a remedy a VAC does not — its verifier re-asks the permission question of the delegator at the time of the act, so withdrawing the delegator's own authority stops every delegate at once without touching a single credential. A VAC *is* that answer rather than a pointer to it: nothing about the subject's current standing is consulted at verification, and an authority that can neither expire nor be revoked cannot be taken back at all.
+
+**Expiry is the primary mechanism.** `validUntil` is REQUIRED on every VAC, and issuers SHOULD set it no later than the purpose requires. Expiry costs a verifier no network access, discloses nothing to anyone, and cannot fail open or closed, so it is the only withdrawal mechanism that survives the offline verification this section is built around. A governing party that wants authority it can take back quickly issues it for a short period and re-issues it, rather than issuing it for a year and relying on a status list to undo it.
+
+**Revocation covers what expiry cannot.** Where authority must be withdrawn before it expires — a member leaves, a device is lost, an agent misbehaves — the issuer revokes the VAC through the `credentialStatus` it carries. Only the issuer of a VAC can revoke it: an attenuating holder revokes what it issued, the party governing the scope revokes what it issued, and neither can revoke the other's directly.
+
+**Verification.** A verifier MUST check the status of every VAC in a chain that carries `credentialStatus`, and MUST reject the chain if any of them has been revoked. A VAC that carries none is evaluated on its validity period alone, and its absence is not a defect; a governing party MAY require `credentialStatus` for a class of authority at its scope, in which case a verifier enforcing that policy MUST reject a VAC that omits it. This keeps the network cost of verification proportional to what a chain actually claims: short-lived attenuations under a long-lived root cost one status check between them, and a chain whose every link is short-lived costs none.
+
+**Revocation cascades.** A VAC confers no more than the VAC it was attenuated from, so revoking a VAC withdraws every VAC attenuated from it, transitively, whether or not the revoking issuer knows those derivations exist. This is what makes attenuation safe to permit without the governing party's involvement: a governing party that revokes its own grant withdraws the whole tree beneath it in a single act, and needs no register of what its holder went on to issue. It also means an attenuator's grants die with its own — a holder whose authority is revoked cannot leave a working agent behind it.
+
+**A revoked parent is not always visible, and that is the trade.** A verifier presented with a chain whose root carries `credentialStatus` learns that the root was revoked and rejects the chain. A verifier presented with a chain whose links carry none learns nothing beyond their validity periods, and will accept an attenuation whose parent was revoked an hour ago. Offline verification bounds that exposure rather than removing it, and what bounds it is the shortest `validUntil` in the chain. Holders attenuating authority SHOULD keep that value as short as the task allows for this reason, and a governing party that cannot tolerate the gap SHOULD require `credentialStatus` on the VACs it issues, together with a freshness window short enough to close it.
+
+### Authority is not delegation
+
+A VAC authorizes its subject to act **in their own name**, within a scope. It does not authorize acting *on behalf of* another party, and a verifier MUST NOT read it as doing so. The two are separate questions — *may this party do this here?* and *may this party stand in for that one?* — and answering both with one credential means a verifier cannot tell which it has been shown.
+
+> **Editor's note — the `actions` vocabulary is deliberately open, and that has a cost.** Each governing party defines its own action strings, which is what lets a room, a community and a service each grant what makes sense for it without a registry negotiating between them. The cost is that `"write"` issued by one governing party carries no defined relationship to `"write"` issued by another: the strings are only meaningful within the scope that issued them, and a verifier that generalises across scopes is reading something the specification does not say. That is tolerable while authority is checked by the party governing the scope, which is the case this specification describes. It would need revisiting if VACs are ever expected to be interpreted across governance boundaries — a shared core vocabulary with room for extension is the obvious answer, and is deliberately not attempted here.
+
+### Relationship to the VDC
+
+The [[ref: VDC]] and the VAC draw the same line from opposite sides. A VDC establishes that one party may act *in another's name*; it never supplies authority, and the verifier re-asks the permission question of the delegator, live, at the time of the act (see [How a Delegation Composes with Authority](#how-a-delegation-composes-with-authority)). A VAC answers that question: it is the credential a delegator can hold that check 2 of that section looks for. The two compose — the reach of a delegated act is the intersection of what the VDC appoints the delegate for and what the delegator's own authority covers — and neither substitutes for the other. A verifier MUST NOT read an attenuated VAC as an appointment to act in the attenuator's name, nor a VDC as conferring any of the delegator's authority on the delegate.
+
+They also differ in what they ask of a verifier. A VAC chain is precommitted: every link only narrows what its parent fixed, the holder presents the whole chain, and a verifier reaches the network only for those links that carry `credentialStatus` (see [Withdrawal](#withdrawal)). A VDC is live by design: the permission question is answered at invocation against the delegator's current standing, so withdrawing the delegator's own authority stops every delegate at once without touching a single VDC. Folding one into the other would give up whichever of those properties the merged credential lacked.
+
+**Which one an agent's grant is.** A person equipping an AI agent could, on the face of it, do either, and the test in [Delegation and Authority](#delegation-and-authority) — whose name is the act in? — decides it. The agent example above is a VAC because the agent is to act **as itself**: the room records the agent as the actor, the agent answers for its acts, and the chain records only who equipped it — that is provenance of its authority, not attribution of its acts. The person's own VAC is the ceiling the chain narrows from, and nothing else of the person's travels with it: authority is not membership, and an agent acting under a VAC is credited with nothing a [[ref: PHC]] or a [[ref: VMC]] attests about its principal. If instead the room needs the act attributed to the person — the person is answerable for it, and the record should say the person acted, through an agent — the person issues a VDC, the agent presents it, and the agent's reach is whatever the person may itself do. Which of the two a governing party admits for agents is a governance determination; that a verifier can always tell which it has been shown is what keeping them as separate credentials buys.
+
+### Authority and membership are separate credentials
+
+A VAC does not attest membership and MUST NOT be accepted as evidence of it; a [[ref: VMC]] does not confer authority and MUST NOT be accepted as evidence of that. Keeping them separate lets a governing party change what a member may do without touching the membership edge, and lets a holder prove authority without proving which member they are.
+
+Where a verifier requires **both** — that the presenter is a member *and* holds authority — and the presentation is a zero-knowledge proof that withholds the subject identifier, the presentation MUST include a proof that both credentials share the same subject. Without it, two parties may pool credentials: one contributes membership, the other contributes authority, and the combination verifies as a single party holding both. See [Zero-Knowledge and Selective Disclosure](#zero-knowledge-and-selective-disclosure).
+
+## Trust Task Context Binding
+
+This section is normative.
+
+DTG credentials are frequently issued during broader multi-step exchanges — [trust tasks](https://glossary.trustoverip.org/#term:trust-tasks) carried out through ceremonies governed by a [[ref: VTC]] or [[ref: VTN]]. A credential exchanged inside such a ceremony can be cryptographically valid as an artifact while still being insufficient evidence that the ceremony reached its intended terminal state. This section defines the mechanism that prevents such credentials from escaping their task context and being misinterpreted.
+
+### Credentials versus Trust Task Artifacts
+
+*This subsection is informative.*
+
+The boundary between this specification and the [Trust Tasks specification](https://trustoverip.github.io/dtgwg-trust-tasks-spec/) is drawn by the following test:
+
+- A **credential** is a durable claim about the graph that is true standing alone (e.g., VRC, VMC, VPC). It lives on after the exchange in which it was issued.
+- An **artifact** is a work-product of a trust task (intermediate or completion), only meaningful within its exchange. It is carried as a Trust Task document, correlated by a shared `threadId`, with its terminal state expressed at the trust task layer — not as a new credential type.
+
+**Test for any new thing:** true outside the exchange? → credential. Only meaningful inside? → artifact.
+
+Every credential type in this specification passes the credential side of this test, and a [[ref: VSC]] predicate profile is admitted only if its predicate does too: a statement meaningful only inside an exchange is an artifact, not a profile (see [Predicate Profiles](#predicate-profiles)). The [[ref: VDC]] is the boundary case that most clearly illustrates it: the delegation grant is durable and passes, while the invocation of a delegation does not and is left to the trust task layer (see [Grant and Invocation](#grant-and-invocation)). Outcome evidence — the Trust Task documents that show a cited exchange completed — and the checks that pair it with a credential are defined by the Trust Tasks specification in [Evidence That a Cited Exchange Completed](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#evidence-that-a-cited-exchange-completed), not by this specification.
+
+> **Minimum compatible version:** Per [Specification Versioning](#specification-versioning), this section states the minimum Document Status of the companion trust task specification required for conformance with the `taskContext` binding mechanism defined below. As of this release, that is Document Status `0.4.0` of the [Trust Tasks specification](https://github.com/trustoverip/dtgwg-trust-tasks-spec), currently a Working Draft — the version at which that specification defined how an external citation, such as this one, names and binds the document it cites — for [The `taskContext` Property](#the-taskcontext-property) and [The `taskDigestMultibase` Property](#the-taskdigestmultibase-property); and, for [Outcome Interpretability](#outcome-interpretability), the first Document Status of that specification that defines outcome evidence for a cited exchange.
+>
+> **Editor's note:** the second minimum is pending. The definition of outcome evidence is proposed for the Trust Tasks specification and not yet released; this note records its Document Status once it is.
+
+### The `taskContext` Property
+
+A credential whose meaning depends on a trust task completing MUST carry a `taskContext` property naming the exchange that attests it. Its value is the `id` of that exchange's initiating document; where exchanges nest, it names the innermost exchange that attests the event. Both rules are the Trust Tasks specification's, stated in [Naming an Exchange from Outside the Framework](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#naming-an-exchange-from-outside-the-framework). The value is not the exchange's `threadId`: that specification permits an initiator to mint a `threadId` unrelated to its `id`, and does not require a `threadId` to be unique, whereas a document's `id` is. This requirement is a property of the credential type, not a per-issuer choice:
+
+- For credential types where this specification marks `taskContext` as REQUIRED, and for [[ref: VSC]] predicate profiles that require it, issuers MUST include it.
+- For all other DTG credential types, `taskContext` is OPTIONAL.
+- A DTG credential without a `taskContext` property MUST be interpretable standing alone, independent of any exchange.
+
+> **Editor's note:** `taskContext` and `taskDigestMultibase` have the same values on every presentation of a credential, so they link those presentations even where everything else about the credential is proven in zero knowledge. A committed form of the citation, which the holder opens in proof against the exchange a verifier already holds, is under consideration. It would be carried beside these two properties, or by a profile replacing them; nothing here depends on it.
+
+### The `taskDigestMultibase` Property
+
+An `id` names a document without binding anything to it: anyone can write a different document carrying the same `id`, and a verifier pairing a credential with that document by `id` alone would accept evidence of a different event. A credential that carries `taskContext` because its credential type or profile requires it therefore MUST also carry `taskDigestMultibase`, whose value is the task digest of the document `taskContext` names, computed as the Trust Tasks specification defines in [Binding a Citation to the Document It Names](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#binding-a-citation-to-the-document-it-names). Where `taskContext` is OPTIONAL and present, `taskDigestMultibase` SHOULD be present with it. The digest is taken over that document with its top-level `proof` removed, so it has one value whether or not the document was signed.
+
+### Outcome Interpretability
+
+A verifier MUST NOT interpret a `taskContext`-bearing credential as proof that the associated trust task or ceremony completed unless it also holds matching outcome evidence and has verified it. Outcome evidence, and the checks that pair it with the exchange a credential cites, are defined by the Trust Tasks specification in [Evidence That a Cited Exchange Completed](https://trustoverip.github.io/dtgwg-trust-tasks-spec/#evidence-that-a-cited-exchange-completed); a verifier MUST apply those checks, taking `taskContext` and `taskDigestMultibase` as the citation.
+
+A holder presenting a `taskContext`-bearing credential as evidence that the task completed MUST include that outcome evidence with the presentation. A verifier that does not receive matching outcome evidence MUST treat the credential as not evidencing completion, whether or not such evidence exists elsewhere; the credential is otherwise unaffected. What a relying party may conclude from the credential and its outcome evidence together, across the rest of an interaction, is governed by the composition requirements of the [Verifiable Trust Infrastructure specification](https://trustoverip.github.io/dtgwg-vti-spec/).
+
+## Supporting Concepts
+
+*This section is informative.*
+
+### Personhood Credentials (PHC)
+
+A [[ref: PHC]] is the community-issued [[ref: VMC]] (the membership grant) issued by a [[ref: VTC]] whose governance enforces:
+
+- Real human personhood
+- Exactly one membership per person
+
+No additional schema fields are required. PHC status is determined by governance and trust registries, not by credential structure. Issuers may optionally add `"PersonhoodCredential"` to the `type` array as a non-authoritative hint.
+
+A grant is a PHC whether or not the member has acknowledged it. The member may present an unacknowledged grant as evidence of their own membership under the presentation rule in [Membership Edge Completion](#membership-edge-completion); the acknowledgement gates only the community's ability to assert that membership to others. "Exactly one membership per person" is counted over grants, and is enforced by governance rather than by credential structure.
+
+**Example:**
+
+```json
+{
+  "type": [
+    "VerifiableCredential",
+    "DTGCredential",
+    "MembershipCredential",
+    "PersonhoodCredential"
+  ],
+  "issuer": "did:webvh:QmRfN7pKwEbTs2LcMqDh...:government-idv.example",
+  "credentialSubject": {
+    "id": "did:key:z6MkpTHR8VNs..."
+  }
+}
+```
+
+### Trust Registries
+
+- **Authoritative source** for roles ([[ref: initiator]], [trust anchor](https://glossary.trustoverip.org/#term:trust-anchor), member, [[ref: IDVP]], etc.)
+- Map DIDs to roles and policies
+- Determine acceptable issuers
+- Schema and APIs out of scope for this specification
+- Handle revocations, etc.
+
+### Identity Verification Credentials (IDVC)
+
+- [[ref: IDVCs]] are **not** `DTGCredential` subtypes
+- Any W3C VC satisfying a VTC/VTN's identity-proofing requirements
+- Issuers, assurance levels, and requirements governed by VTC/VTN policy and trust registries
+
+### Zero-Knowledge and Selective Disclosure
+
+- The zero-knowledge constructions below are not bound to a particular presentation mechanism (BBS+, SD-JWT-VC, etc.). A credential's `proof` secures the credential itself ([Base Structure](#base-structure)); a credential that must also support selective disclosure carries the mechanism that provides it in addition to that proof, as its governing framework determines
+- Two ZKP constructions are defined for proving relationships: the [Pairwise Zero-Knowledge Proof](#pairwise-zero-knowledge-proof) (available to any two VRC holders) and the [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof) (available when both parties hold VMCs from the same community)
+- Schemas are kept simple to enable common predicates:
+  - "Holder has valid community-issued VMC from recognized VTC"
+  - "Issuer is authorized member"
+  - "Two distinct VRCs exist"
+  - "Holder has a valid, unrevoked delegation to act in the name of a member of a recognized VTC, covering act X"
+  - "This delegation chain is valid: each scope nests in its parent's, depth is bounded, expiry is monotone, and the root is issued by a member of a recognized VTC" — without disclosing the chain
+  - "Holder holds a VAC conferring action X at scope S, and its chain is valid and unrevoked: each link is issued by its parent's subject, narrows its parent, no link is revoked, depth is within every limit its links set, and the root is issued by the party governing S" — without disclosing the chain
+  - "Two credentials presented together share a subject" — required by [Authority and membership are separate credentials](#authority-and-membership-are-separate-credentials) whenever membership and authority are both proven with the subject withheld
+  - "Holder holds a statement credential from an issuer in set S, under predicate P, about the holder" — one construction covers every [[ref: VSC]] predicate profile, since all share one shape
+- Detailed ZK protocols and registry-ZK interactions are left to the ZKP task force; what that work is blocked on, and what holds until it lands, is set out below
+
+> **Editor's note — what is waiting on the ZKP task force.** The predicates above are requirements on the schemas rather than constructions. This specification fixes what must be *provable* and leaves *how* to the ZK protocol work, so the list should not be read as describing machinery that exists today.
+>
+> Four of those predicates rest on one primitive no DTG specification yet defines: a proof that two credentials, or two identifiers, are under **common control**, without disclosing either. It carries:
+>
+> - the [Community-Anchored Zero-Knowledge Proof](#community-anchored-zero-knowledge-proof), wherever a party's VMC identifier and its VRC identifier differ;
+> - the shared-subject requirement of [Authority and membership are separate credentials](#authority-and-membership-are-separate-credentials), which exists precisely to stop two parties pooling one's membership with the other's authority;
+> - proving a [[ref: VDC]] chain valid without disclosing it, per [Delegation Chains](#delegation-chains);
+> - proving a [[ref: VAC]] chain valid without disclosing it, per [Attenuation](#attenuation).
+>
+> [Correlation Scope](#correlation-scope) makes the first of these the ordinary case rather than an edge case. A member who declares `pairwise` toward their community and `pairwise` toward a counterparty holds two identifiers that differ by construction, so a community-anchored proof must cross them rather than read one identifier out of both credentials.
+>
+> Separately, none of the digest-valued members fixed in [Digest Encoding](#digest-encoding) is salted, so a digest over low-entropy content can be reversed by enumeration where the referenced credential is not disclosed. Blinding them is cross-cutting work with the same task force.
+>
+> The [ZKP task force](https://github.com/trustoverip/dtgwg-zkp-spec)'s work on these is visible in its working draft and construction catalogue, where records for common control, community-anchored composition, delegation chains and blinded binders bear on the dependencies above. That work is proposed rather than merged, and a catalogue record is a statement, its witness requirements, and the open questions around it, not a completed proof; the shared-subject and VAC-chain cases in particular still need their own mapping and evidence rather than inheriting one because common control appears in the catalogue. Glossary cross-references will follow once that specification is merged and its terms are published.
+>
+> **What holds until this work lands.** Nothing in this specification is unverifiable in the meantime: every requirement here can be checked by presenting the credentials themselves, which is what a holder must do today to satisfy any predicate above. The cost is privacy rather than correctness, and it falls hardest where a chain is involved, because the disclosure boundary is the whole chain rather than the credential presented (see [Privacy Considerations](#privacy-considerations) item 13). Implementations should not defer shipping a rule of this specification on the grounds that its zero-knowledge form is unspecified.
+
+## Security Considerations
+
+*This section is informative.*
+
+### Every credential
+
+1. **Proof verification.** Verifiers must cryptographically verify the `proof` of every DTG credential, including resolution of the issuer's DID and validation of the verification method, before relying on any claim in the credential.
+2. **Validity period and revocation enforcement.** Verifiers must reject credentials outside their `validFrom`/`validUntil` window (or v1.1 equivalents). Where a credential carries `credentialStatus`, verifiers must check it within the freshness window the governing party defines, and should consult the governing trust registry or governance framework for that window and for whether status is required at all: the registry is where the policy lives, and the credential is where the status lives. See [Withdrawal](#withdrawal) for VACs and the `credentialStatus` rule of [VDC (Verifiable Delegation Credential)](#vdc-verifiable-delegation-credential) for VDCs.
+3. **Issuer authorization.** A cryptographically valid credential is not necessarily an authorized one. Verifiers must evaluate whether the issuer is authorized for the claimed role (e.g., a community-issued VMC's issuer being a recognized VTC, a member-issued VMC's issuer being the subject of the grant it acknowledges, a VIC issuer being permitted to invite) using the applicable trust registry or governance framework.
+4. **Key compromise.** Compromise of the private key controlling any DID used in a DTG credential (issuer or subject) undermines all credentials anchored to it. Key rotation and revocation procedures are governed by the applicable DID methods and trust registries.
+5. **Context collapse.** A credential presented outside the trust task exchange in which it was issued may be misinterpreted as evidence of a completed ceremony. The requirements of [Trust Task Context Binding](#trust-task-context-binding) exist to prevent this class of attack and must be enforced by verifiers.
+6. **Digest integrity.** A verifier relying on a [[ref: VSC]]'s `object.digestMultibase` — a VWC's binding to a specific edge, for instance — must have the referenced credential available, recompute the digest over its JCS (RFC 8785) canonical form with the top-level `proof` member removed, and confirm it matches — comparing decoded digest bytes rather than encoded strings, as set out in [Digest Encoding](#digest-encoding). A mismatch invalidates the statement. Without the referenced credential in hand, the digest cannot be resolved to a credential, and a VWC should not be treated as evidence of which edge was witnessed. The same requirement applies to the `digestMultibase` that a member-issued VMC carries of the community-issued VMC it acknowledges, to a VDC's `parent` and `accepts`, and to a VAC's `authority.parent`: a mismatch invalidates the acknowledgement, the derivation, or the attenuation. The same discipline applies to `taskDigestMultibase`, recomputed over the document `taskContext` names as [The `taskDigestMultibase` Property](#the-taskdigestmultibase-property) sets out.
+7. **Predicate acceptance.** A [[ref: VSC]] whose signature and status verify is not thereby meaningful. A verifier must apply [Predicate Handling](#predicate-handling): reject any predicate it has not been configured to accept, never infer meaning from a predicate's spelling or from a published equivalence, and never draw a conclusion a profile does not state ([What Verification Establishes](#what-verification-establishes)). A well-formed statement under an unrecognized predicate is the intended shape of an attack that names authority, membership, or personhood in a string.
+8. **Context integrity.** The DTG context feeds canonicalization under any proof suite that expands JSON-LD, so a verifier holding different context bytes from the issuer computes a different signature input. Verifiers should bundle the context and check it against the digest in [Context Versions](#context-versions) rather than fetching it, and should treat a credential listing an unrecognized DTG context version as one they cannot verify.
+
+### Membership and invitation
+
+8. **Unconsented membership assertion.** A community-issued VMC alone does not establish that the named entity agreed to be a member, since a community can issue one without that party's involvement. Verifiers evaluating a membership claim made by anyone other than the member should require the member-issued VMC of the pair, per [Membership Edge Completion](#membership-edge-completion).
+9. **Replay of invitation credentials.** VICs should be issued with short validity periods and should be treated as single-use by the accepting [[ref: VTA]]/[[ref: PEP]], to prevent replay of an intercepted invitation.
+
+### Delegation (VDC)
+
+10. **Misreading a VDC as a claim (VDC).** A [[ref: VDC]] establishes representation rather than asserting a fact, so a verifier that evaluates it with the logic it applies to the other DTG credentials will accept a party as standing in for another without having bounded what that party may then do. Verifiers must apply the scope, chain, and invocation requirements of [VDC (Verifiable Delegation Credential)](#vdc-verifiable-delegation-credential) in full, and must not accept a syntactically valid VDC as representation for anything outside its `scope`.
+11. **Treating a delegation as a permission (VDC).** A VDC establishes that the delegate may act in the delegator's name; it says nothing about whether the act requested is one the delegator could perform. A verifier that treats a valid VDC as sufficient grounds to proceed lets a delegate do in the delegator's name what the delegator could not do itself, and a verifier that evaluates the delegate's own permissions instead of the delegator's answers the wrong question entirely. The checks are independent and must each be made, as set out in [How a Delegation Composes with Authority](#how-a-delegation-composes-with-authority).
+12. **Delegation chain escalation (VDC).** Re-delegation that broadens scope, extends validity beyond the parent, or exceeds the permitted depth converts a narrow appointment into a wide one. Verifiers must evaluate every VDC in a chain, not only the one presented, and must reject any chain that does not resolve to a root delegation issued by the principal in whose name the acts would be performed.
+13. **Delegation revocation latency (VDC).** An appointment already made is withdrawn either by letting it expire or by revoking it, and the usefulness of revocation is bounded by how recently the verifier checked: a verifier holding a cached status accepts an act performed after revocation, and a verifier that fails hard on an unreachable status endpoint turns the issuer's outage into its own. Delegators should keep `validUntil` as short as the delegated purpose allows, so that expiry gives a bounded and stated exposure window; where a VDC carries `credentialStatus`, verifiers should check it within the freshness window defined by the governing VTC or VTN.
+14. **Bearer use of a VDC.** A VDC that is presented without a demonstration of key control by the delegate proves only that a delegation exists. Verifiers must enforce [Invocation Binding](#invocation-binding); otherwise a captured VDC is usable by whoever holds a copy of it.
+15. **Personhood laundering via delegation.** A [[ref: PHC]] asserts that its holder is a real person with exactly one membership. Because a delegate's acts are attributable to the delegator, a verifier that cannot distinguish the two may credit an agent with its principal's personhood, and may credit several agents of one person as several people. Verifiers must treat an act performed under a VDC as an act by the delegate in the delegator's name — never as an act by the delegator in person — and communities whose governance depends on personhood should state whether delegated acts are recognized at all.
+
+### Authority (VAC)
+
+16. **Authority chain verification.** A [[ref: VAC]] carrying `authority.parent` confers nothing on its own. Verifiers must verify every link to a VAC issued by the party governing the scope, and reject the chain if any link widens the actions, scope, or validity period its parent conferred, is issued by a party other than its parent's subject, or lies further below an ancestor than that ancestor's `maxAttenuation` permits. Verifying only the presented credential accepts a self-issued grant of arbitrary authority.
+17. **Chain resolution is bearer-side by design.** `authority.parent` is a digest, so it names nothing a verifier could fetch: every link comes from the presentation, and a chain that cannot be completed from it is rejected. A resolvable reference in its place would make verification depend on network availability, expose the verifier to server-side request forgery against an address the holder chooses, and signal credential use to whoever hosts the identifier.
+18. **Chain depth is a denial-of-service surface.** Verification is linear in depth and runs on every presentation, so the maximum-depth rule is a resource bound, not a stylistic one.
+19. **Credential pooling under zero-knowledge presentation.** Where membership and authority are proven together with the subject identifier withheld, a verifier must require proof that both credentials share a subject. Otherwise two parties can combine one's membership with the other's authority and present as a single party holding both.
+20. **Authority revocation latency (VAC).** A VAC is the answer to the permission question rather than a pointer to it, so nothing about the subject's current standing is consulted at verification and expiry or revocation are the only ways authority is taken back. The usefulness of revocation is bounded by how recently the verifier checked: a verifier holding a cached status accepts an act performed after revocation, and one that fails hard on an unreachable status endpoint turns the issuer's outage into a denial of the scope it governs. Issuers should keep `validUntil` as short as the purpose allows, so that expiry gives a bounded and stated exposure window even where status is unavailable, and governing parties should state the freshness window within which a status check must have been made.
+21. **Bearer use of a VAC.** A VAC presented without a demonstration of key control by its subject proves only that authority was conferred on someone. Because a chain is presented in full on every use, a captured presentation is a captured chain, and a verifier that accepts possession as identification lets whoever captured it exercise the whole of what the chain confers. Verifiers must enforce [Invocation](#invocation); a VAC names no second party whose presentation would be accepted instead, so a verifier that skips the key-control demonstration has no weaker check to fall back on.
+22. **Revocation cascades down a chain, and is invisible where status is absent (VAC).** Revoking a VAC withdraws everything attenuated from it, which is what lets a governing party withdraw derivations it never saw. The reverse is the exposure: a verifier presented with a chain whose links carry no `credentialStatus` cannot learn that an ancestor was revoked, and will accept an attenuation until the shortest `validUntil` in the chain expires. Holders attenuating authority should keep that period short, and a governing party that cannot tolerate the gap should require status on the VACs it issues.
+## Privacy Considerations
+
+*This section is informative.*
+
+### Identifiers and correlation
+
+1. **Pairwise really means pairwise.** Reusing one identifier across counterparties creates exactly the correlation a `pairwise` declaration promises to avoid. As required in [Unilateral Relationship Identification](#unilateral-relationship-identification), such reuse is prohibited, and it also falsifies a declaration the holder made — which is the more useful thing for a verifier to be able to say. A holder who wants an identifier to reach more than one counterparty should declare `directed` and say so, rather than declare `pairwise` and reuse it.
+2. **Intentional correlation via personas.** Correlation across relationships should occur only through the holder's deliberate assertion of a [[ref: persona]] (via a [[ref: VPC]]) or through an identifier the holder has deliberately declared `directed` or `public` — never as a side effect of credential structure.
+3. **What a community does with a member's identifier.** A member's declared scope constrains the member's own disclosure and nothing else. A community that publishes a member directory, or that presents a member-issued [[ref: VMC]] to a third party, widens the exposure of an identifier its holder may have declared `pairwise`. This is why a VTC's governance is required to state its disclosure practice, and why a member's scope choice at join time is only as meaningful as that statement; see [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone).
+4. **Correlation through the resolution layer.** Correlation does not require the credentials themselves. Where several of a party's narrow-scope identifiers resolve through common infrastructure — a shared web origin, a shared registry, or a shared set of DID log witnesses countersigning their updates — that infrastructure can associate identifiers that the credential structure was designed to keep apart, and can observe when each is used. Choosing a DID method for these is therefore a privacy decision as much as a key management one; see [DID Method Considerations](#did-method-considerations).
+
+### Disclosure
+
+5. **Minimal disclosure.** DTG credential schemas are intentionally minimal so that holders can satisfy common predicates (membership, relationship existence) using zero-knowledge or selective disclosure mechanisms without revealing underlying DIDs or credential contents.
+6. **ZKPs by default.** Implementations should use ZKP presentation by default so that privacy preservation does not require any extra effort on behalf of users.
+7. **Witness data.** The optional `witnessContext` of a [[ref: VWC]] may reveal information about where and when parties met. Issuers should include only what the witnessing purpose requires, and holders should be able to withhold `witnessContext` details when proving the attestation.
+8. **The acknowledgement as a disclosure artifact.** A member-issued VMC is a signed, transferable credential naming both the member and the community, and it is held by the community. It exists so that a community cannot assert a membership it is unable to prove — but the same property lets the community prove that membership to a third party without the member's involvement, which a community-issued VMC alone did not allow. Members should treat issuing an acknowledgement as a durable and delegable disclosure of the membership. The acknowledgement is issued from the same identifier the grant names as its subject, so the exposure it carries is the exposure of whatever scope the member chose for joining — a `pairwise` identifier confines it to this community, and a `directed` or `public` one carries the membership into every context that identifier reaches (see items 1 and 3). A member may also bound the disclosure with a short `validUntil` (see the editor's note in [Membership Edge Completion](#membership-edge-completion)). This specification defines no selective-disclosure or zero-knowledge form for the acknowledgement, so a community proving membership to a third party currently discloses the whole credential.
+9. **Effective disclosure of an edge.** A declared scope constrains only the disclosure of the party who declared it. Each half of an edge is issued by its own party, under an identifier whose scope that party chose; neither party controls, and neither can necessarily discover, what the other does with its own half. An edge's effective disclosure is therefore the wider of its two halves' scopes, not the narrower: a correctly `pairwise` half is still correlated to a named party if the counterparty published the opposing half under a `directed` or `public` identifier. Implementations should compute the privacy of an edge over both halves, not from the half they issued, and should not represent a `pairwise` half as making the edge pairwise. The same reasoning applies to any joint presentation: what a set of credentials discloses together may exceed what any of them discloses alone.
+
+### Delegation and authority chains
+
+10. **Delegation correlation.** A [[ref: VDC]] links a delegator and a delegate, and every invocation of it exposes that link to the verifier. A VDC is presented to arbitrary verifiers, each of whom sees the delegator's identifier, so that identifier is known to a holder-chosen set by construction: delegators should issue VDCs from an identifier declared `directed` and scoped to the context in which the appointment will be exercised, rather than from a `public` identifier or from a `directed` one already used across contexts, so that a delegate's activity in one context does not correlate its principal's activity in another. The same applies on the delegate's side: a delegate holding appointments from several principals should accept each under a distinct identifier, since presenting two appointments under one `credentialSubject.id` links the two principals to the verifier without either having chosen it.
+11. **Scope terms as identifiers.** The `scope` of a VDC is community-defined text that may be narrow enough to identify the delegator, the delegate, or the underlying arrangement. Issuers should choose scope vocabularies that are no more specific than the appointment requires, and holders should be able to prove scope containment in zero knowledge rather than disclosing the full `scope` array.
+12. **Status lookups as a correlation surface.** A `credentialStatus` check is a live lookup: whoever hosts the status list learns which verifier checked which credential, and when. Herd privacy over the list's contents does not touch the fetch itself. This is why the VDC prefers short validity and re-issuance to status where the delegator is reachable, and why a governing VTC or VTN that requires status for a class of delegations should state the correlation it accepts in doing so.
+13. **Chain disclosure.** Establishing representation under a derived VDC requires the verifier to see the whole chain up to the root, whose issuer is the principal. Selective disclosure over the leaf credential does not help, because the disclosure boundary is the chain, not the credential. Holders should expect a derived VDC to reveal its ancestry, and delegators should prefer single-hop appointments where the round trip to the principal is available. The same holds for an attenuated [[ref: VAC]], whose chain the holder presents in full: an agent presenting one discloses to every verifier the identifier of the party that equipped it.
+14. **Status on a root gives back part of what bearer-side presentation bought.** A VAC chain is presented rather than fetched, so verifying one ordinarily tells its issuers nothing. Where the root carries `credentialStatus`, that changes for the root alone: whoever hosts its status list learns that a verifier checked it, and when, which for a chain of attenuations means the governing party observes the timing of activity by agents and devices it never issued to and cannot see. The exposure is one lookup for the whole chain rather than one per link, and it discloses timing rather than content — but it is the reason [Withdrawal](#withdrawal) prefers short validity to status wherever re-issuance is available, and a governing party that requires status should state the correlation it accepts in doing so, as item 12 requires of delegations.
+## Governance Considerations
+
+*This section is informative.*
+
+This specification deliberately delegates most policy decisions to the governance frameworks of individual [[ref: VTCs]] and [[ref: VTNs]], consistent with the [ToIP Governance Metamodel](https://trustoverip.org/wp-content/uploads/ToIP-Governance-Metamodel-Specification-V1.0-2021-12-21.pdf):
+
+1. Membership criteria, invitation policies, and identity-proofing requirements (including acceptable [[ref: IDVPs]] and [[ref: IDVCs]]) are defined by each community's governance framework and published via trust registries.
+2. Whether a [[ref: VMC]] qualifies as a [[ref: PHC]] is a governance determination, not a schema property.
+3. *Whether* member identifiers are disclosed beyond the [[ref: VTA]] is a governance determination; that a VTC **state** its answer is a normative requirement on the VTC as issuer, not a governance option, because it decides whether a member's `pairwise` declaration remains truthful once the membership exists. See [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone).
+4. Predicate vocabularies beyond the profiles this specification defines, the endorsement vocabulary used under `dtg:endorses`, and the witnessing policies under which `dtg:witnessed` statements are issued, are defined by the governing VTC or VTN (see [Predicate Profiles](#predicate-profiles)). Which vocabularies a verifier accepts is likewise a governance decision, applied through the verifier's configuration.
+5. Delegation scope vocabularies for [[ref: VDCs]], the status mechanism used for their revocation, the freshness window that determines when a VDC must carry `credentialStatus`, whether re-delegation is permitted for particular acts, and whether delegated acts are recognized at all where personhood is required, are defined by the governing VTC or VTN.
+6. Whether a delegate must independently qualify — hold a [[ref: VMC]] of its own, or meet the same requirements as any other actor — before it may act in another's name is a governance determination, not a property of the VDC. A VDC establishes only that the appointment was made; see [How a Delegation Composes with Authority](#how-a-delegation-composes-with-authority).
+7. Action vocabularies for [[ref: VACs]] at a scope, the status mechanism used for their revocation, the freshness window that determines when a VAC must carry `credentialStatus` and how recently a verifier must have checked it, and whether status is required outright for a class of authority, are defined by the party governing that scope — a VTC or VTN through its governance framework, or another [[ref: DTG node]] through whatever it publishes for the scope it governs. See [Withdrawal](#withdrawal).
+8. Whether the subject of an attenuated [[ref: VAC]] must independently qualify — hold a [[ref: VMC]] at the scope, or meet whatever the scope asks of any other actor — before authority derived from another party's grant is honoured, is a governance determination rather than a property of the VAC. Attenuation establishes only that the authority was narrowed by someone entitled to narrow it; whether the party now holding it is one the scope will deal with is a separate question, and the counterpart of the same determination for delegates in item 6. See [Attenuation](#attenuation).
+9. New credential types proposed by higher-layer trust task protocol specifications are expected to be coordinated between the DTGWG task forces responsible for credentials and trust tasks.
+
+## Internationalization Considerations
+
+*This section is informative.*
+
+Human-readable values in DTG credentials (e.g., endorsement names, witness event names) are community-defined and may appear in any language. Predicate IRIs are identifiers rather than words: a vocabulary supplies human-readable names through `rdfs:label` values with language tags, and the IRI itself is required to be in Unicode Normalization Form C (see [Predicate Handling](#predicate-handling)). Detailed internationalization guidance will be completed before this specification advances beyond Working Draft status.
+
+## Accessibility Considerations
+
+*This section is informative.*
+
+This specification defines data structures rather than user interfaces. Accessibility guidance for implementations presenting DTG credentials to users will be completed before this specification advances beyond Working Draft status.
+
+## Conformance
+
+This section is normative.
+
+This specification defines normative requirements, using the keywords defined in [Requirements Language](#requirements-language), for the following conformance targets:
+
+### Conformance Targets
+
+1. **Issuers** — entities that issue DTG credentials. A conforming issuer MUST produce credentials that satisfy the [Base Structure](#base-structure) and the schema of the concrete credential type — for a [[ref: VSC]], including the constraints of its predicate's profile — including the `taskContext` requirements of [Trust Task Context Binding](#trust-task-context-binding). A conforming issuer MUST declare the [[ref: correlation scope]] of its identifier in `issuerScope` on every credential it issues and MUST satisfy the declaration requirements of [Correlation Scope](#correlation-scope); a conforming issuer that is a [[ref: VTC]] issuing [[ref: VMCs]] MUST also publish its member-identifier disclosure practice as [Scope the holder cannot declare alone](#scope-the-holder-cannot-declare-alone) requires.
+2. **Holders** — entities that store and present DTG credentials. A conforming holder MUST present credentials without altering their contents and, when presenting a `taskContext`-bearing credential as evidence of task completion, MUST include matching outcome evidence with the presentation, as [Outcome Interpretability](#outcome-interpretability) requires.
+3. **Verifiers** — entities that verify DTG credentials and presentations. A conforming verifier MUST implement the verification requirements of the [Security Considerations](#security-considerations) and the outcome interpretability rule of [Trust Task Context Binding](#trust-task-context-binding), and MUST support W3C VC Data Model v2.0 verification per [W3C Verifiable Credentials Version Support](#w3c-verifiable-credentials-version-support). A conforming verifier MUST reject a credential whose `issuerScope` is absent or invalid, as [Base Structure](#base-structure) requires, and MUST apply the verifier requirements of [Correlation Scope](#correlation-scope) to the declared scope. A verifier that accepts [[ref: VACs]] MUST additionally implement the chain verification rule of [Attenuation](#attenuation), the status-checking rule of [Withdrawal](#withdrawal), and the key-control rule of [Invocation](#invocation). A verifier that accepts [[ref: VSCs]] MUST additionally implement [Predicate Handling](#predicate-handling) and the bounds of [What Verification Establishes](#what-verification-establishes).
+
+### Conformance Tests
+
+Conformance test suites for this specification have not yet been defined and are expected to be developed as the specification matures toward Working Group Approved Deliverable status.
+
+## References
+
+### Normative References
+
+- [W3C Verifiable Credentials Data Model v2.0](https://www.w3.org/TR/vc-data-model-2.0/)
+- [W3C Verifiable Credentials Data Model v1.1](https://www.w3.org/TR/vc-data-model/)
+- [W3C Decentralized Identifiers (DIDs) v1.0](https://www.w3.org/TR/did-1.0/)
+- [IETF RFC 2119: Key words for use in RFCs to Indicate Requirement Levels](https://datatracker.ietf.org/doc/html/rfc2119)
+- [IETF RFC 8785: JSON Canonicalization Scheme (JCS)](https://datatracker.ietf.org/doc/html/rfc8785)
+- [W3C Verifiable Credential Data Integrity v1.0](https://www.w3.org/TR/vc-data-integrity/)
+- [W3C Data Integrity EdDSA Cryptosuites v1.0](https://www.w3.org/TR/vc-di-eddsa/) — `eddsa-jcs-2022`
+- [Trust Tasks](https://github.com/trustoverip/dtgwg-trust-tasks-spec) — the DTGWG Trust Tasks specification, Working Draft; see [Trust Task Context Binding](#trust-task-context-binding) for the minimum Document Status required
+- [DTG VSC Predicate Registry](https://registry.trustoverip.org/dtg) — the registry that defines the two core profiles, [`https://registry.trustoverip.org/dtg/vsc/endorses/1`](https://registry.trustoverip.org/dtg/vsc/endorses/1) and [`https://registry.trustoverip.org/dtg/vsc/witnessed/1`](https://registry.trustoverip.org/dtg/vsc/witnessed/1), and publishes the credential context [`https://registry.trustoverip.org/dtg/context/v1`](https://registry.trustoverip.org/dtg/context/v1) that [Base Structure](#base-structure) requires; its immutability and versioning rules are in its GOVERNANCE.md
+- [W3C Controlled Identifiers (CIDs) v1.0](https://www.w3.org/TR/cid-1.0/)
+- [W3C JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)
+- [IETF RFC 3987: Internationalized Resource Identifiers (IRIs)](https://www.rfc-editor.org/rfc/rfc3987)
+- [ISO 8601: Date and time format](https://www.iso.org/iso-8601-date-and-time-format.html)
+
+### Informative References
+
+- [ToIP Trust Registry Query Protocol](https://trustoverip.github.io/tswg-trust-registry-protocol/)
+- [ToIP Governance Metamodel Specification V1.0](https://trustoverip.org/wp-content/uploads/ToIP-Governance-Metamodel-Specification-V1.0-2021-12-21.pdf)
+- [Trust Tasks (ToIP Glossary)](https://glossary.trustoverip.org/#term:trust-tasks) and the community proposals at [trusttasks.org](https://www.trusttasks.org)
+- [IETF RFC 7095: jCard: The JSON Format for vCard](https://datatracker.ietf.org/doc/html/rfc7095)
+- [Agent2Agent (A2A) Protocol: AgentCard](https://agent2agent.info/docs/concepts/agentcard/)
+- [Personhood Credentials (arXiv:2408.07892)](https://arxiv.org/abs/2408.07892)
+- [Authorization Capabilities for Linked Data (ZCAP-LD)](https://w3c-ccg.github.io/zcap-spec/)
+- [User Controlled Authorization Networks (UCAN)](https://github.com/ucan-wg/spec)
+- [W3C RDF 1.2 Concepts and Abstract Syntax](https://www.w3.org/TR/rdf12-concepts/)
+- [W3C RDF Schema 1.1](https://www.w3.org/TR/rdf-schema/)
+- [W3C Bitstring Status List v1.0](https://www.w3.org/TR/vc-bitstring-status-list/)
+- [Verifiable Trust Infrastructure (VTI)](https://github.com/trustoverip/dtgwg-vti-spec) — the DTGWG system specification composing this specification with Trust Tasks, Working Draft
+- [DTG Credentials v0.3 proposal draft](https://github.com/trustoverip/dtgwg-cred-tf/blob/main/dtg.md) (superseded by this specification)
+
+## Appendices
+
+### Appendix A: Acknowledgements
+
+The editors gratefully acknowledge the participants of the Decentralized Trust Graph Working Group (DTGWG) and its task forces, whose discussions and contributions shaped this specification — in particular Sankarshan Mukhopadhyay, whose analysis of the credential/trust-task boundary shaped the Trust Task Context Binding section, and Glenn Gore, for the verifiable identifier interoperability considerations.
+
+Copyright © 2026 Trust Over IP (ToIP) Contributors  
+This work is licensed under a Creative Commons Attribution 4.0 International License.
+

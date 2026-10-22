@@ -1,12 +1,24 @@
-# What we built: a rule-checker that doesn't need rewriting when the rules change
+# What we built: Trust over IP, drafted into guarding classified documents
 
-**Short version:** we designed, and partly tested, a way to check that a
-document's "who may read this" labels are consistent, bind those labels to
-the document so nobody can swap them, and release each piece only to people
-who are currently allowed to see it. The rules come from the US government's
-own published rule set, and we run them as-is. When the government updates
-its rules, our software doesn't change. You load the new rules file and
-re-sign one record.
+**Short version:** we took Trust over IP, a set of standards built so that
+people and organisations can trust each other *without* a central
+authority, and designed a way to use it to enforce US government
+**classification markings**: `TOP SECRET`, code-word compartments,
+"no foreign nationals", need-to-know. That is close to the most
+centralised, top-down access control there is. It's the opposite of what
+ToIP was built for, and as far as we can tell it works anyway, while
+following the specs to the letter.
+
+In practice the design does three things:
+
+- It checks that a document's classification markings are consistent,
+  using the government's own published rule set, run unchanged.
+- It seals each marking to its paragraph so nobody can swap it.
+- It releases each paragraph only to readers who are cleared for it right
+  now.
+
+When the government updates its rules, the software doesn't change. You
+load the new rules file and re-sign one record.
 
 Nothing is running in production. What exists is a design document that
 four independent reviewers tried to break, the government's rule files
@@ -60,6 +72,27 @@ identity and signed digital credentials. In everyday terms:
   for handing over a credential.
 
 We use ToIP as the plumbing and the government rule files as the brains.
+
+## The joke
+
+ToIP's founding story is decentralisation and human agency. You choose whom
+to trust, you hold your own credentials, you disclose only what you want
+to, and governance is open and shared. This design keeps every mechanism
+and inverts every value:
+
+| ToIP was built for | Here it is used for |
+|---|---|
+| Peers choosing whom to trust | A governance authority deciding for everyone; the requester's choice is "advisory" |
+| Credentials you hold and present wherever you like | Clearances issued to you, revoked by someone else, and checked only inside a sealed enclave |
+| Selective disclosure, so *you* can hide things from others | Selective disclosure, so others can hide things from *you* |
+| Public witnesses keeping everyone honest | Witnesses locked inside a classified enclave, because the list of who is cleared for what is itself secret |
+| Open, verifiable, explainable decisions | Being refused with no reason given, because the reason ("you lack `SI-G`") would itself be classified |
+| Getting rid of the paper trail | Replacing a filing cabinet of signed nondisclosure forms with a cryptographically perfect one |
+
+The best part is that none of it bends the specs. An independent review
+against the ToIP standards made the design *more* compliant, not less. It
+is a fully compliant use of the stack that its authors would never have
+chosen.
 
 ## How it works
 
